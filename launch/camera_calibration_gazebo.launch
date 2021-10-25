@@ -2,7 +2,6 @@
   <!-- Arguments -->
   <!-- <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/> -->
 
-  <!-- START SIMULATION -->
   <arg name="x_pos" default="0.0"/>
   <arg name="y_pos" default="0.0"/>
   <arg name="z_pos" default="0.0"/>
@@ -16,6 +15,12 @@
     <arg name="debug" value="false"/>
   </include>
   <!-- END SIMULATION -->
+  <!-- Run the camera calibration package -->
+  <!-- <node pkg="camera_calibration" type="cameracalibrator.py">\
+    <param name="size" value="8x6"/>
+    <param name="square" value="0.108"/>
+    <param name="size" value="8x6"/>
 
+  </node> -->
 
 </launch>
