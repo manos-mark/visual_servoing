@@ -1,0 +1,23 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/home/mscv_gr1/catkin_ws/devel/include/**",
+        "/opt/ros/melodic/include/**",
+        "/home/mscv_gr1/catkin_ws/src/raspicam_node/include/**",
+        "/home/mscv_gr1/catkin_ws/src/teleop_twist_joy/include/**",
+        "/home/mscv_gr1/catkin_ws/src/turtlebot3_simulations/turtlebot3_fake/include/**",
+        "/home/mscv_gr1/catkin_ws/src/turtlebot3_simulations/turtlebot3_gazebo/include/**",
+        "/home/mscv_gr1/catkin_ws/src/turtlebot3_vibot/turtlebot3_slam/include/**",
+        "/home/mscv_gr1/catkin_ws/src/ueye_cam/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS"
+    }
+  ],
+  "version": 4
+}

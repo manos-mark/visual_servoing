@@ -1,0 +1,13 @@
+<launch>
+  <!-- Arguments -->
+  <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
+
+  <!-- Import Camera package -->
+  <include file="$(find ueye_cam)/launch/rgb8.launch"></include>
+	
+  <!-- Import Pose Estimation package -->
+  <include file="$(find aruco_detect)/launch/aruco_detect.launch">
+    <arg name="camera" value="/camera/image_raw/compressed"/>
+  </include>
+
+</launch>
