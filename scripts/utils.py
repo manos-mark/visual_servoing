@@ -1,4 +1,27 @@
 import cv2
+import yaml
+import glob
+import numpy as np
+import os
+print(os.getcwd())
+### GLOBAL DEFINITIONS
+print(glob.glob("../calibrationdata/ost.yaml"))
+CALIBRATION_FILE = glob.glob("../calibrationdata/ost.yaml")[0]
+
+def get_calibration_data():
+	with open(CALIBRATION_FILE, "r") as data:
+		try:
+			calibration_data = yaml.safe_load()
+		except yaml.YAMLError as exc:
+			print(exc)
+	camera_matrix = calibration_data["camera_matrix"]
+	distortion_coef = calibration_data["distortion_coefficients"]
+	h = calibration_data["image_width"]
+	w = calibration_data["image_height"]
+	cm = np.array(camera_matrix["data"]).reshape((camera_matrix["rows"],camera_matrix["cols"]))
+	ds = np.array(distortion_coef["data"]).reshape((distortion_coef["rows"],distortion_coef["cols"]))
+
+	return h,w,cm,ds
 
 ARUCO_DICT = {
 	"DICT_4X4_50": cv2.aruco.DICT_4X4_50,
@@ -55,3 +78,5 @@ def aruco_display(corners, ids, rejected, image):
 			print("[Inference] ArUco marker ID: {}".format(markerID))
 			# show the output image
 	return image
+
+

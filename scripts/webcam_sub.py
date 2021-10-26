@@ -9,8 +9,12 @@ from sensor_msgs.msg import Image # Image is the message type
 from cv_bridge import CvBridge # Package to convert between ROS and OpenCV Images
 import cv2 # OpenCV library
 import numpy as np
-from utils import ARUCO_DICT, aruco_display
-import yaml
+from utils import ARUCO_DICT, aruco_display, get_calibration_data
+
+
+# Calibration Data
+HEIGHT, WIDTH, CAMERA_MATRIX, DISTORTION_COEF = get_calibration_data()
+
 
 
 def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coefficients):
@@ -48,8 +52,6 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
 
     return frame
 
-
-
 def callback(data):
   # Used to convert between ROS and OpenCV images
   br = CvBridge()
@@ -72,33 +74,18 @@ def callback(data):
     [0.     ,    0.     ,    1.     ]
   ])
   h,  w = current_frame.shape[:2]
-  newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+  newcameramtx, roi = cv2.getOptimalNewCameraMatrix(CAMERA_MATRIX, DISTORTION_COEF, (WIDTH,HEIGHT), 1, (WIDTH,HEIGHT))
   # undistort
-  dst = cv2.undistort(current_frame, mtx, dist, None, newcameramtx)
+  dst = cv2.undistort(current_frame, CAMERA_MATRIX, DISTORTION_COEF, None, newcameramtx)
   # crop the image
   x, y, w, h = roi
-  dst = dst[y:y+h, x:x+w]
+  undistort_frame = dst[y:y+h, x:x+w]
   # load the ArUCo dictionary, grab the ArUCo parameters, and detect
   # the markers
   aruco_dict_type = cv2.aruco.DICT_ARUCO_ORIGINAL
 
-  # TODO: get those matrix automatically and not hardcoded
-  camera_matrix = np.array([[364.03943, 0., 626.78017],
-            [0., 363.3541, 513.60797],
-            [0., 0. ,1.]])
-  distortion_matrix = np.array([-0.162588, 0.016767, -0.001129, 0.000068, 0.000000])
 
-  h, w = current_frame.shape[:2]
-
-  # Undistort the frame
-  new_camera_matrix, roi = cv2.getOptimalNewCameraMatrix(camera_matrix, distortion_matrix, (w,h), 1, (w,h))
-  undistort_frame = cv2.undistort(current_frame, camera_matrix, distortion_matrix, None, new_camera_matrix)
-
-  # Crop the frame
-  x, y, w, h = roi
-  undistort_frame = undistort_frame[y:y+h, x:x+w]
-
-  output = pose_esitmation(undistort_frame, aruco_dict_type, camera_matrix, distortion_matrix)
+  output = pose_esitmation(undistort_frame, aruco_dict_type, CAMERA_MATRIX, DISTORTION_COEF)
 
   cv2.imshow('Estimated Pose', output)
 
