@@ -3,7 +3,7 @@
   <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
 
   <!-- Import Pose Estimation package -->
-  <!-- <include file="$(find aruco_detect)/launch/aruco_detect.launch">
+  <include file="$(find visual_servoing)/launch/find_marker.launch">
     <arg name="camera" value="/t265/stereo_ir/left/fisheye_image_raw/compressed"/>
   </include> -->
 
@@ -21,7 +21,5 @@
     <arg name="debug" value="false"/>
   </include>
   <!-- END SIMULATION -->
-
-  <node pkg="visual_servoing" type="detect_marker.py" name="detect_marker" output="screen" />
 
 </launch>

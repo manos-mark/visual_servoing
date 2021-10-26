@@ -11,6 +11,9 @@ import rospy # Python library for ROS
 from sensor_msgs.msg import Image # Image is the message type
 from cv_bridge import CvBridge # Package to convert between ROS and OpenCV Images
 import cv2 # OpenCV library
+import numpy as np
+from utils import ARUCO_DICT, aruco_display
+
  
 def callback(data):
  
@@ -21,11 +24,18 @@ def callback(data):
   rospy.loginfo("receiving video frame")
    
   # Convert ROS Image message to OpenCV image
-  current_frame = br.imgmsg_to_cv2(data)
-   
-  # Display image
-  cv2.imshow("camera", current_frame)
-   
+  # current_frame = br.imgmsg_to_cv2(data)
+  current_frame = np.frombuffer(data.data, dtype=np.uint8).reshape(data.height, data.width, -1)
+
+  # load the ArUCo dictionary, grab the ArUCo parameters, and detect
+  # the markers
+  arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_ARUCO_ORIGINAL)
+  arucoParams = cv2.aruco.DetectorParameters_create()
+  corners, ids, rejected = cv2.aruco.detectMarkers(current_frame, arucoDict, parameters=arucoParams)
+
+  detected_markers = aruco_display(corners, ids, rejected, current_frame)
+  cv2.imshow("Image", detected_markers)
+
   cv2.waitKey(1)
       
 def receive_message():
@@ -47,8 +57,4 @@ def receive_message():
 if __name__ == '__main__':
   # verify that the supplied ArUCo tag exists and is supported by
   # OpenCV
-  if ARUCO_DICT.get(args["type"], None) is None:
-    print("[INFO] ArUCo tag of '{}' is not supported".format(
-      args["type"]))
-    sys.exit(0)
   receive_message()
