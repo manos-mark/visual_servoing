@@ -13,7 +13,9 @@ from utils import ARUCO_DICT, aruco_display, get_calibration_data
 
 
 # Calibration Data
-HEIGHT, WIDTH, CAMERA_MATRIX, DISTORTION_COEF = get_calibration_data()
+CALIBRATION_FILE_PATH = rospy.get_param('calibration_file')
+# print(CALIBRATION_FILE_PATH)
+HEIGHT, WIDTH, CAMERA_MATRIX, DISTORTION_COEF = get_calibration_data(CALIBRATION_FILE_PATH)
 
 
 

@@ -5,13 +5,13 @@ import numpy as np
 import os
 print(os.getcwd())
 ### GLOBAL DEFINITIONS
-print(glob.glob("../calibrationdata/ost.yaml"))
-CALIBRATION_FILE = glob.glob("../calibrationdata/ost.yaml")[0]
+# print(glob.glob("../calibrationdata/ost.yaml"))
+# CALIBRATION_FILE = glob.glob("../calibrationdata/ost.yaml")[0]
 
-def get_calibration_data():
-	with open(CALIBRATION_FILE, "r") as data:
+def get_calibration_data(calibration_file):
+	with open(calibration_file, "r") as data:
 		try:
-			calibration_data = yaml.safe_load()
+			calibration_data = yaml.safe_load(data)
 		except yaml.YAMLError as exc:
 			print(exc)
 	camera_matrix = calibration_data["camera_matrix"]
