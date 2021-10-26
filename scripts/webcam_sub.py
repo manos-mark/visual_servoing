@@ -14,7 +14,42 @@ import cv2 # OpenCV library
 import numpy as np
 from utils import ARUCO_DICT, aruco_display
 
- 
+
+def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coefficients):
+
+    '''
+    frame - Frame from the video stream
+    matrix_coefficients - Intrinsic matrix of the calibrated camera
+    distortion_coefficients - Distortion coefficients associated with your camera
+
+    return:-
+    frame - The frame with the axis drawn on it
+    '''
+
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    cv2.aruco_dict = cv2.aruco.Dictionary_get(aruco_dict_type)
+    parameters = cv2.aruco.DetectorParameters_create()
+
+
+    corners, ids, rejected_img_points = cv2.aruco.detectMarkers(gray, cv2.aruco_dict,parameters=parameters,
+        cameraMatrix=matrix_coefficients,
+        distCoeff=distortion_coefficients)
+
+        # If markers are detected
+    if len(corners) > 0:
+        for i in range(0, len(ids)):
+            # Estimate pose of each marker and return the values rvec and tvec---(different from those of camera coefficients)
+            rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.02, matrix_coefficients,
+                                                                       distortion_coefficients)
+            # Draw a square around the markers
+            cv2.aruco.drawDetectedMarkers(frame, corners) 
+
+            # Draw Axis
+            cv2.aruco.drawAxis(frame, matrix_coefficients, distortion_coefficients, rvec, tvec, 0.01)  
+
+    return frame
+
+
 def callback(data):
  
   # Used to convert between ROS and OpenCV images
@@ -29,13 +64,16 @@ def callback(data):
 
   # load the ArUCo dictionary, grab the ArUCo parameters, and detect
   # the markers
-  arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_ARUCO_ORIGINAL)
-  arucoParams = cv2.aruco.DetectorParameters_create()
-  corners, ids, rejected = cv2.aruco.detectMarkers(current_frame, arucoDict, parameters=arucoParams)
-  print(corners, ids)
+  aruco_dict_type = cv2.aruco.DICT_ARUCO_ORIGINAL
 
-  detected_markers = aruco_display(corners, ids, rejected, current_frame)
-  cv2.imshow("Image", detected_markers)
+  k = np.array([[364.03943, 0., 626.78017],
+            [0., 363.3541, 513.60797],
+            [0., 0. ,1.]])
+  d = np.array([-0.162588, 0.016767, -0.001129, 0.000068, 0.000000])
+
+  output = pose_esitmation(current_frame, aruco_dict_type, k, d)
+
+  cv2.imshow('Estimated Pose', output)
 
   cv2.waitKey(1)
       
