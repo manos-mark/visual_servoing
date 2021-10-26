@@ -23,6 +23,9 @@
   <!-- END SIMULATION -->
 
   <!-- Import Pose Estimation package -->
-  <include file="$(find visual_servoing)/launch/find_marker.launch"></include>
+  <include file="$(find visual_servoing)/launch/find_marker.launch">
+    <arg name="calibration_file" value="$(find visual_servoing)/calibrationdata/ost.yaml"/>
+
+  </include>
 
 </launch>
