@@ -21,7 +21,7 @@ def callback(data):
   br = CvBridge()
  
   # Output debugging information to the terminal
-  rospy.loginfo("receiving video frame")
+  # rospy.loginfo("receiving video frame")
    
   # Convert ROS Image message to OpenCV image
   # current_frame = br.imgmsg_to_cv2(data)
@@ -32,6 +32,7 @@ def callback(data):
   arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_ARUCO_ORIGINAL)
   arucoParams = cv2.aruco.DetectorParameters_create()
   corners, ids, rejected = cv2.aruco.detectMarkers(current_frame, arucoDict, parameters=arucoParams)
+  print(corners, ids)
 
   detected_markers = aruco_display(corners, ids, rejected, current_frame)
   cv2.imshow("Image", detected_markers)
