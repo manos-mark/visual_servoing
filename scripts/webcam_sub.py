@@ -96,6 +96,7 @@ def receive_message():
   rospy.init_node('video_sub_py', anonymous=True)
    
   # Node is subscribing to the video_frames topic
+  # TODO: get topic as parameter
   rospy.Subscriber('/t265/stereo_ir/left/fisheye_image_raw', Image, callback)
  
   # spin() simply keeps python from exiting until this node is stopped
