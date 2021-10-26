@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 # Description:
-# - Subscribes to real-time streaming video from your built-in webcam.
-#
-# Author:
-# - Addison Sears-Collins
-# - https://automaticaddison.com
+# - Subscribes to real-time streaming video from simuation camera.
+
  
 # Import the necessary libraries
 import rospy # Python library for ROS
@@ -13,6 +10,7 @@ from cv_bridge import CvBridge # Package to convert between ROS and OpenCV Image
 import cv2 # OpenCV library
 import numpy as np
 from utils import ARUCO_DICT, aruco_display
+import yaml
 
 
 def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coefficients):
@@ -51,8 +49,8 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
     return frame
 
 
+
 def callback(data):
- 
   # Used to convert between ROS and OpenCV images
   br = CvBridge()
  
@@ -62,7 +60,24 @@ def callback(data):
   # Convert ROS Image message to OpenCV image
   # current_frame = br.imgmsg_to_cv2(data)
   current_frame = np.frombuffer(data.data, dtype=np.uint8).reshape(data.height, data.width, -1)
+  
+  # Get calibration data
+  # glob.glob("../calibrationdata/*.yaml")
 
+  
+  dist = np.array([-0.162588, 0.016767, -0.001129, 0.000068, 0.000000])
+  mtx = np.array([
+    [ 364.03943,    0.     ,  626.78017],
+    [0.     ,  363.3541 ,  513.60797],
+    [0.     ,    0.     ,    1.     ]
+  ])
+  h,  w = current_frame.shape[:2]
+  newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+  # undistort
+  dst = cv2.undistort(current_frame, mtx, dist, None, newcameramtx)
+  # crop the image
+  x, y, w, h = roi
+  dst = dst[y:y+h, x:x+w]
   # load the ArUCo dictionary, grab the ArUCo parameters, and detect
   # the markers
   aruco_dict_type = cv2.aruco.DICT_ARUCO_ORIGINAL

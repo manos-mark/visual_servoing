@@ -2,6 +2,11 @@
   <!-- Arguments -->
   <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
 
+  <!-- Import Pose Estimation package -->
+  <!-- <include file="$(find visual_servoing)/launch/find_marker.launch">
+    <arg name="camera" value="/t265/stereo_ir/left/fisheye_image_raw/compressed"/>
+  </include> -->
+
   <!-- START SIMULATION -->
   <arg name="x_pos" default="0.0"/>
   <arg name="y_pos" default="0.0"/>

@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
-# Basics ROS program to publish real-time streaming 
-# video from your built-in webcam
-# Author:
-# - Addison Sears-Collins
-# - https://automaticaddison.com
+# Basics ROS program to publish real-time streaming from simulation camera
+
  
 # Import the necessary libraries
 import rospy # Python library for ROS
