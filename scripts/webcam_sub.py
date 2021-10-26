@@ -36,7 +36,7 @@ def receive_message():
   rospy.init_node('video_sub_py', anonymous=True)
    
   # Node is subscribing to the video_frames topic
-  rospy.Subscriber('video_frames', Image, callback)
+  rospy.Subscriber('/t265/stereo_ir/left/fisheye_image_raw', Image, callback)
  
   # spin() simply keeps python from exiting until this node is stopped
   rospy.spin()
@@ -45,4 +45,10 @@ def receive_message():
   cv2.destroyAllWindows()
   
 if __name__ == '__main__':
+  # verify that the supplied ArUCo tag exists and is supported by
+  # OpenCV
+  if ARUCO_DICT.get(args["type"], None) is None:
+    print("[INFO] ArUCo tag of '{}' is not supported".format(
+      args["type"]))
+    sys.exit(0)
   receive_message()

@@ -3,9 +3,9 @@
   <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
 
   <!-- Import Pose Estimation package -->
-  <include file="$(find aruco_detect)/launch/aruco_detect.launch">
+  <!-- <include file="$(find aruco_detect)/launch/aruco_detect.launch">
     <arg name="camera" value="/t265/stereo_ir/left/fisheye_image_raw/compressed"/>
-  </include>
+  </include> -->
 
   <!-- START SIMULATION -->
   <arg name="x_pos" default="0.0"/>

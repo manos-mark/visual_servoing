@@ -1,10 +1,10 @@
 <launch>
-  <node
+  <!-- <node
     pkg="visual_servoing"
     type="webcam_pub.py"
     name="webcam_pub"
     output="screen"
-  />
+  /> -->
   <node
     pkg="visual_servoing"
     type="webcam_sub.py"
