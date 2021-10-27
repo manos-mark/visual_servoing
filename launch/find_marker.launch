@@ -1,5 +1,9 @@
 <launch>
-  <arg name="calibration_file" default="$(find visual_servoing)/calibrationdata/ost.yaml"/>
+  <arg name="calibration_file" default="$(find visual_servoing)/calibration_data/ost.yaml"/>
+  <arg name="camera" default="/t265/stereo_ir/left/fisheye_image_raw"/>
+ 
+  <param name="calibration_file" value="$(arg calibration_file)" />
+  <param name="camera" value="$(arg camera)"/>
 
   <!-- <node
     pkg="visual_servoing"
@@ -7,9 +11,7 @@
     name="webcam_pub"
     output="screen"
   /> -->
-  <param name="calibration_file" value="$(arg calibration_file)" />
 
-  <node pkg="visual_servoing" type="webcam_sub.py" name="webcam_sub" output="screen">
-  </node>
+  <node pkg="visual_servoing" type="webcam_sub.py" name="webcam_sub" output="screen"></node>
 
 </launch>

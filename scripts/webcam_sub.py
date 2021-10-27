@@ -65,16 +65,6 @@ def callback(data):
   # current_frame = br.imgmsg_to_cv2(data)
   current_frame = np.frombuffer(data.data, dtype=np.uint8).reshape(data.height, data.width, -1)
   
-  # Get calibration data
-  # glob.glob("../calibrationdata/*.yaml")
-
-  
-  dist = np.array([-0.162588, 0.016767, -0.001129, 0.000068, 0.000000])
-  mtx = np.array([
-    [ 364.03943,    0.     ,  626.78017],
-    [0.     ,  363.3541 ,  513.60797],
-    [0.     ,    0.     ,    1.     ]
-  ])
   h,  w = current_frame.shape[:2]
   newcameramtx, roi = cv2.getOptimalNewCameraMatrix(CAMERA_MATRIX, DISTORTION_COEF, (WIDTH,HEIGHT), 1, (WIDTH,HEIGHT))
   # undistort
@@ -101,8 +91,8 @@ def receive_message():
   rospy.init_node('video_sub_py', anonymous=True)
    
   # Node is subscribing to the video_frames topic
-  # TODO: get topic as parameter
-  rospy.Subscriber('/t265/stereo_ir/left/fisheye_image_raw', Image, callback)
+  camera = rospy.get_param('camera')
+  rospy.Subscriber(camera, Image, callback)
  
   # spin() simply keeps python from exiting until this node is stopped
   rospy.spin()

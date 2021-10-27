@@ -24,8 +24,8 @@
 
   <!-- Import Pose Estimation package -->
   <include file="$(find visual_servoing)/launch/find_marker.launch">
-    <arg name="calibration_file" value="$(find visual_servoing)/calibrationdata/ost.yaml"/>
-
+    <arg name="calibration_file" value="$(find visual_servoing)/calibration_data/ost.yaml"/>
+    <arg name="camera" default="/t265/stereo_ir/left/fisheye_image_raw"/>
   </include>
 
 </launch>
