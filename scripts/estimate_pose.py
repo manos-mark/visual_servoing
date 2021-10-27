@@ -2,10 +2,10 @@
 # Description:
 # - Subscribes to real-time streaming video from simuation camera.
 
- 
 # Import the necessary libraries
 import rospy # Python library for ROS
 from sensor_msgs.msg import Image # Image is the message type
+from geometry_msgs.msg import Vector3
 from cv_bridge import CvBridge # Package to convert between ROS and OpenCV Images
 import cv2 # OpenCV library
 import numpy as np
@@ -14,13 +14,11 @@ from utils import ARUCO_DICT, aruco_display, get_calibration_data
 
 # Calibration Data
 CALIBRATION_FILE_PATH = rospy.get_param('calibration_file')
-# print(CALIBRATION_FILE_PATH)
 HEIGHT, WIDTH, CAMERA_MATRIX, DISTORTION_COEF = get_calibration_data(CALIBRATION_FILE_PATH)
 
 
 
 def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coefficients):
-
     '''
     frame - Frame from the video stream
     matrix_coefficients - Intrinsic matrix of the calibrated camera
@@ -38,14 +36,17 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
     corners, ids, rejected_img_points = cv2.aruco.detectMarkers(gray, cv2.aruco_dict,parameters=parameters,
         cameraMatrix=matrix_coefficients,
         distCoeff=distortion_coefficients)
-
+  
         # If markers are detected
     if len(corners) > 0:
         for i in range(0, len(ids)):
             # Estimate pose of each marker and return the values rvec and tvec---(different from those of camera coefficients)
             rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.02, matrix_coefficients,
                                                                        distortion_coefficients)
-            print(rvec, tvec,markerPoints)
+            # print('Rotational vector:', rvec[0][0], 'Translational vector:', tvec[0][0])
+            # pub.publish([rvec[0][0], tvec[0][0]])
+            pub.publish(rvec[0][0][0], rvec[0][0][1], rvec[0][0][2])
+
             # Draw a square around the markers
             cv2.aruco.drawDetectedMarkers(frame, corners) 
 
@@ -83,13 +84,7 @@ def callback(data):
   cv2.imshow('Estimated Pose', output)
   cv2.waitKey(1)
       
-def receive_message():
- 
-  # Tells rospy the name of the node.
-  # Anonymous = True makes sure the node has a unique name. Random
-  # numbers are added to the end of the name. 
-  rospy.init_node('estimate_pose', anonymous=True)
-   
+def receive_message():   
   # Node is subscribing to the video_frames topic
   camera = rospy.get_param('camera')
   rospy.Subscriber(camera, Image, callback)
@@ -100,7 +95,17 @@ def receive_message():
   # Close down the video stream when done
   cv2.destroyAllWindows()
   
-if __name__ == '__main__':
-  # verify that the supplied ArUCo tag exists and is supported by
-  # OpenCV
+if __name__ == '__main__': 
+  # Tells rospy the name of the node.
+  # Anonymous = True makes sure the node has a unique name. Random
+  # numbers are added to the end of the name. 
+  # node_name = rospy.get_param('estimate_pose_node')
+  rospy.init_node('estimate_pose', anonymous=True)
+
+  # topic_name = rospy.get_param('object_position')
+  # print(topic_name)
+  pub = rospy.Publisher('robot_position', Vector3, queue_size=10)
+
   receive_message()
+
+  
