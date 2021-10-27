@@ -1,12 +1,7 @@
 import cv2
 import yaml
-import glob
 import numpy as np
-import os
-print(os.getcwd())
-### GLOBAL DEFINITIONS
-# print(glob.glob("../calibrationdata/ost.yaml"))
-# CALIBRATION_FILE = glob.glob("../calibrationdata/ost.yaml")[0]
+
 
 def get_calibration_data(calibration_file):
 	with open(calibration_file, "r") as data:

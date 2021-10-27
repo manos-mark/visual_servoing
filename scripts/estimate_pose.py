@@ -56,7 +56,7 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
 
 def callback(data):
   # Used to convert between ROS and OpenCV images
-  br = CvBridge()
+  # br = CvBridge()
  
   # Output debugging information to the terminal
   # rospy.loginfo("receiving video frame")
@@ -67,20 +67,20 @@ def callback(data):
   
   h,  w = current_frame.shape[:2]
   newcameramtx, roi = cv2.getOptimalNewCameraMatrix(CAMERA_MATRIX, DISTORTION_COEF, (WIDTH,HEIGHT), 1, (WIDTH,HEIGHT))
+  
   # undistort
   dst = cv2.undistort(current_frame, CAMERA_MATRIX, DISTORTION_COEF, None, newcameramtx)
+  
   # crop the image
   x, y, w, h = roi
   undistort_frame = dst[y:y+h, x:x+w]
-  # load the ArUCo dictionary, grab the ArUCo parameters, and detect
-  # the markers
+  
+  # load the ArUCo dictionary, grab the ArUCo parameters, and detect the markers
   aruco_dict_type = cv2.aruco.DICT_ARUCO_ORIGINAL
-
 
   output = pose_esitmation(undistort_frame, aruco_dict_type, CAMERA_MATRIX, DISTORTION_COEF)
 
   cv2.imshow('Estimated Pose', output)
-
   cv2.waitKey(1)
       
 def receive_message():
@@ -88,7 +88,7 @@ def receive_message():
   # Tells rospy the name of the node.
   # Anonymous = True makes sure the node has a unique name. Random
   # numbers are added to the end of the name. 
-  rospy.init_node('video_sub_py', anonymous=True)
+  rospy.init_node('estimate_pose', anonymous=True)
    
   # Node is subscribing to the video_frames topic
   camera = rospy.get_param('camera')

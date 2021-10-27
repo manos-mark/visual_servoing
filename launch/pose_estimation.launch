@@ -12,6 +12,6 @@
     output="screen"
   /> -->
 
-  <node pkg="visual_servoing" type="webcam_sub.py" name="webcam_sub" output="screen"></node>
+  <node pkg="visual_servoing" type="estimate_pose.py" name="estimate_pose" output="screen"></node>
 
 </launch>
