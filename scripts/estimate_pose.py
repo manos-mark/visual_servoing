@@ -43,7 +43,7 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
             # Estimate pose of each marker and return the values rvec and tvec---(different from those of camera coefficients)
             rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.02, matrix_coefficients,
                                                                        distortion_coefficients)
-            # print('Rotational vector:', rvec[0][0], 'Translational vector:', tvec[0][0])
+            print('Rotational vector:', rvec[0][0], 'Translational vector:', tvec[0][0])
             # pub.publish([rvec[0][0], tvec[0][0]])
             pub.publish(rvec[0][0][0], rvec[0][0][1], rvec[0][0][2])
 
@@ -77,7 +77,7 @@ def callback(data):
   undistort_frame = dst[y:y+h, x:x+w]
   
   # load the ArUCo dictionary, grab the ArUCo parameters, and detect the markers
-  aruco_dict_type = cv2.aruco.DICT_ARUCO_ORIGINAL
+  aruco_dict_type = cv2.aruco.DICT_4X4_100
 
   output = pose_esitmation(undistort_frame, aruco_dict_type, CAMERA_MATRIX, DISTORTION_COEF)
 
