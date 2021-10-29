@@ -5,7 +5,7 @@
 # Import the necessary libraries
 import rospy # Python library for ROS
 from sensor_msgs.msg import Image # Image is the message type
-from geometry_msgs.msg import Vector3
+from visual_servoing.msg import Pose_estimation_vectors
 from cv_bridge import CvBridge # Package to convert between ROS and OpenCV Images
 import cv2 # OpenCV library
 import numpy as np
@@ -31,7 +31,7 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     cv2.aruco_dict = cv2.aruco.Dictionary_get(aruco_dict_type)
     parameters = cv2.aruco.DetectorParameters_create()
-
+    message = Pose_estimation_vectors()
 
     corners, ids, rejected_img_points = cv2.aruco.detectMarkers(gray, cv2.aruco_dict,parameters=parameters,
         cameraMatrix=matrix_coefficients,
@@ -44,8 +44,9 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
             rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.02, matrix_coefficients,
                                                                        distortion_coefficients)
             print('Rotational vector:', rvec[0][0], 'Translational vector:', tvec[0][0])
-            # pub.publish([rvec[0][0], tvec[0][0]])
-            pub.publish(rvec[0][0][0], rvec[0][0][1], rvec[0][0][2])
+            message.rotational.x, message.rotational.y, message.rotational.z  = rvec[0][0][0], rvec[0][0][1], rvec[0][0][2]
+            message.translational.x, message.translational.y, message.translational.z = tvec[0][0][0], tvec[0][0][1], tvec[0][0][2]
+            pub.publish(message)
 
             # Draw a square around the markers
             cv2.aruco.drawDetectedMarkers(frame, corners) 
@@ -77,7 +78,8 @@ def callback(data):
   undistort_frame = dst[y:y+h, x:x+w]
   
   # load the ArUCo dictionary, grab the ArUCo parameters, and detect the markers
-  aruco_dict_type = cv2.aruco.DICT_4X4_100
+  # aruco_dict_type = cv2.aruco.DICT_4X4_100
+  aruco_dict_type = cv2.aruco.DICT_ARUCO_ORIGINAL
 
   output = pose_esitmation(undistort_frame, aruco_dict_type, CAMERA_MATRIX, DISTORTION_COEF)
 
@@ -87,6 +89,7 @@ def callback(data):
 def receive_message():   
   # Node is subscribing to the video_frames topic
   camera = rospy.get_param('camera')
+  print(camera)
   rospy.Subscriber(camera, Image, callback)
  
   # spin() simply keeps python from exiting until this node is stopped
@@ -104,7 +107,7 @@ if __name__ == '__main__':
 
   # topic_name = rospy.get_param('object_position')
   # print(topic_name)
-  pub = rospy.Publisher('robot_position', Vector3, queue_size=10)
+  pub = rospy.Publisher('robot_position', Pose_estimation_vectors, queue_size=10)
 
   receive_message()
 
