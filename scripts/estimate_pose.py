@@ -36,24 +36,33 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
     corners, ids, rejected_img_points = cv2.aruco.detectMarkers(gray, cv2.aruco_dict,parameters=parameters,
         cameraMatrix=matrix_coefficients,
         distCoeff=distortion_coefficients)
-  
-        # If markers are detected
+    #  The output of the ids is [[0],[1]] (tw0 markers)
+    # If markers are detected
     if len(corners) > 0:
-        for i in range(0, len(ids)):
-            # Estimate pose of each marker and return the values rvec and tvec---(different from those of camera coefficients)
-            rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.02, matrix_coefficients,
-                                                                       distortion_coefficients)
-            print('Rotational vector:', rvec[0][0], 'Translational vector:', tvec[0][0])
-            message.rotational.x, message.rotational.y, message.rotational.z  = rvec[0][0][0], rvec[0][0][1], rvec[0][0][2]
-            message.translational.x, message.translational.y, message.translational.z = tvec[0][0][0], tvec[0][0][1], tvec[0][0][2]
-            pub.publish(message)
+      for index, id in enumerate(ids):
+        rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(
+          corners[index], 
+          0.02, 
+          matrix_coefficients,
+          distortion_coefficients
+        )
+        # Draw a square around the markers
+        cv2.aruco.drawDetectedMarkers(frame, corners) 
 
-            # Draw a square around the markers
-            cv2.aruco.drawDetectedMarkers(frame, corners) 
+          # Draw Axis
+        cv2.aruco.drawAxis(frame, matrix_coefficients, distortion_coefficients, rvec, tvec, 0.01)  
+        # print('Rotational vector:', rvec[0][0], 'Translational vector:', tvec[0][0])
+        
+        message.rotational.x, message.rotational.y, message.rotational.z  = rvec[0][0][0], rvec[0][0][1], rvec[0][0][2]
+        message.translational.x, message.translational.y, message.translational.z = tvec[0][0][0], tvec[0][0][1], tvec[0][0][2]
+        
+        # if the id[0] is the current position
+        if id[0] == 0: 
+          current_pub.publish(message)
+        elif id[0] == 1:
+          target_pub.publish(message)
 
-            # Draw Axis
-            cv2.aruco.drawAxis(frame, matrix_coefficients, distortion_coefficients, rvec, tvec, 0.01)  
-
+            
     return frame
 
 def callback(data):
@@ -107,7 +116,8 @@ if __name__ == '__main__':
 
   # topic_name = rospy.get_param('object_position')
   # print(topic_name)
-  pub = rospy.Publisher('robot_position', Pose_estimation_vectors, queue_size=10)
+  current_pub = rospy.Publisher('current_position', Pose_estimation_vectors, queue_size=10)
+  target_pub = rospy.Publisher('target_position', Pose_estimation_vectors, queue_size=10)
 
   receive_message()
 
