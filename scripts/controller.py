@@ -9,7 +9,7 @@ from geometry_msgs.msg import Vector3
 
 class Controller:
     def __init__(self):
-        self.sub = rospy.Subscriber('robot_position', Vector3, move_robot)
+        self.sub = rospy.Subscriber('current_position', Vector3, move_robot)
         # self.sub = rospy.Subscriber('robot_controller', Vector3[2], move_robot)
     # def __init__(self, forward_speed_gain, rotational_speed_gain):
     #     self.forward_speed_gain = forward_speed_gain
@@ -71,8 +71,7 @@ class Controller:
             return target_theta, velocity, theta_error, distance_error
 
 def move_robot(data):
-    # print(data)
-    pass
+    print(data)
 #     distance_to_target = self.distance_to_target(self.current_pos, self.target_pos)
 
 #     if distance_to_target < 0.01:
