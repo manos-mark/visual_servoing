@@ -42,7 +42,7 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
       for index, id in enumerate(ids):
         rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(
           corners[index], 
-          0.02, 
+          0.2, 
           matrix_coefficients,
           distortion_coefficients
         )
@@ -88,7 +88,7 @@ def callback(data):
   
   # load the ArUCo dictionary, grab the ArUCo parameters, and detect the markers
   # aruco_dict_type = cv2.aruco.DICT_4X4_100
-  aruco_dict_type = cv2.aruco.DICT_ARUCO_ORIGINAL
+  aruco_dict_type = cv2.aruco.DICT_4X4_100 #cv2.aruco.DICT_ARUCO_ORIGINAL
 
   output = pose_esitmation(undistort_frame, aruco_dict_type, CAMERA_MATRIX, DISTORTION_COEF)
 
