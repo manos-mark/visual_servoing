@@ -4,6 +4,7 @@ import numpy as np
 import math
 import rospy
 import time
+import cv2
 
 from geometry_msgs.msg import Twist
 from numpy.lib.function_base import _calculate_shapes
@@ -75,15 +76,23 @@ class Controller:
             return target_theta, new_current_pos, theta_error, distance_error
 
     def set_current_pos(self, data: Pose_estimation_vectors):
-        self.current_pos = np.array([data.translational.x, data.translational.y], dtype=np.float32)
-        self.theta = np.float32(data.rotational.z)
+        rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))
+        translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
+        homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
 
-        if (self.current_pos is not None) and (self.target_pos is not None):
-            self.move_robot()
+        print('\n', 'rotational_matrix\n', rotational_matrix)
+        print('\n', 'translational_vector\n', translational_vector)
+        print('\n', 'homogenious_matrix\n', homogenious_matrix)
+        self.current_pos = np.array([data.translational.x, data.translational.y], dtype=np.float32)
+        # self.theta = np.float32(data.rotational.z)
+
+        # if (self.current_pos is not None) and (self.target_pos is not None):
+        #     self.move_robot()
                 
     def set_target_pos(self, data: Pose_estimation_vectors):
         if self.target_pos is None:
             self.target_pos = np.array([data.translational.x, data.translational.y], dtype=np.float32)
+            self.target_theta = np.float32(data.rotational.z)
 
     def move_robot(self):
         if (self.current_pos is None) or (self.target_pos is None):
