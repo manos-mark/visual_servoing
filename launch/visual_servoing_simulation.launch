@@ -16,7 +16,7 @@
 
   <!-- Import Pose Estimation package for Robot -->
   <include file="$(find visual_servoing)/launch/pose_estimation.launch">
-    <arg name="calibration_file" value="$(find visual_servoing)/calibration_data/ost.yaml"/>
+    <arg name="calibration_file" value="$(find visual_servoing)/calibration_data/ost_simulation.yaml"/>
     <arg name="camera" value="/t265/stereo_ir/left/fisheye_image_raw"/>
   </include>
 

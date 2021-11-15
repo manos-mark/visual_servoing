@@ -88,7 +88,7 @@ def callback(data):
   
   # load the ArUCo dictionary, grab the ArUCo parameters, and detect the markers
   # aruco_dict_type = cv2.aruco.DICT_4X4_100
-  aruco_dict_type = cv2.aruco.DICT_4X4_100 #cv2.aruco.DICT_ARUCO_ORIGINAL
+  aruco_dict_type = cv2.aruco.DICT_ARUCO_ORIGINAL #cv2.aruco['DICT_4X4_100']
 
   output = pose_esitmation(undistort_frame, aruco_dict_type, CAMERA_MATRIX, DISTORTION_COEF)
 
