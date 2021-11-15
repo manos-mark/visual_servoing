@@ -8,8 +8,9 @@
     <arg name="calibration_file" value="$(find visual_servoing)/calibration_data/ost_real_world.yaml"/>
     <!-- <arg name="camera" value="/t265/stereo_ir/left/fisheye_image_raw"/> -->
     <arg name="camera" value="/camera/image_raw"/>
-
   </include>
+
+  <!-- <include file="$(find ueye_cam)/launch/rgb8.launch"></include> -->
 
 </launch>
 
