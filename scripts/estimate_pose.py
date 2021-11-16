@@ -58,24 +58,9 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
         
         # if the id[0] is the current position
         if id[0] == 1: 
-          # current_pub.publish(message)
-          cur_msg = Pose_estimation_vectors()
-          cur_msg.rotational.x = -2.2510809733603536
-          cur_msg.rotational.y = -2.183862783888941
-          cur_msg.rotational.z = 0.012626837422556145
-          cur_msg.translational.x = -0.26780215575423916
-          cur_msg.translational.y = -0.049998194180917985
-          cur_msg.translational.z = 0.739893706166235
-          current_pub.publish(cur_msg)
+          current_pub.publish(message)
         # elif id[0] == 1:
-          tar_msg = Pose_estimation_vectors()
-          tar_msg.rotational.x = -2.1234665800184387
-          tar_msg.rotational.y = -2.286227829685306
-          tar_msg.rotational.z = -0.02135709201659134
-          tar_msg.translational.x = -0.27216700583615216
-          tar_msg.translational.y = -0.4138658948790167
-          tar_msg.translational.z = 0.7414195187618529
-          target_pub.publish(tar_msg)
+          target_pub.publish(message)
 
             
     return frame
