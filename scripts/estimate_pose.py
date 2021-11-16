@@ -59,7 +59,7 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
         # if the id[0] is the current position
         if id[0] == 1: 
           current_pub.publish(message)
-        # elif id[0] == 0:
+        elif id[0] == 0:
           target_pub.publish(message)
 
             
