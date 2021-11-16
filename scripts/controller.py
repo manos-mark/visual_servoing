@@ -42,14 +42,14 @@ class Controller:
     #         return target_theta, new_current_pos, theta_error, distance_error
 
     def set_current_pos(self, data: Pose_estimation_vectors):
-        # print('cur depth: ', data.translational.z)
-        rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))
-        translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
-        homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
-        self.curr_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
-        # print('\n', 'rotational_matrix\n', rotational_matrix)
-        # print('\n', 'translational_vector\n', translational_vector)
-        # print('\n', 'homogenious_matrix\n', homogenious_matrix)
+        if self.curr_homogenious_matrix is None:
+            rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))
+            translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
+            homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
+            self.curr_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
+            # print('\n', 'rotational_matrix\n', rotational_matrix)
+            # print('\n', 'translational_vector\n', translational_vector)
+            # print('\n', 'homogenious_matrix\n', homogenious_matrix)
 
         if (self.curr_homogenious_matrix is not None) and (self.target_homogenious_matrix is not None):
             self.move_robot()
@@ -82,12 +82,12 @@ class Controller:
         rho = math.sqrt(math.pow(dy, 2) + math.pow(dx, 2)) # self.distance_to_target(self.current_pos, self.target_pos)
 
         # angle between X axis and the orientation of the robot
-        alpha = normalize(-theta + math.atan2(dy, dx))
+        alpha = -theta + math.atan2(dx, dy)#normalize(-theta + math.atan2(dy, dx))
         alpha = math.degrees(alpha)
 
         # angle between the orientation of the robot and the target orientation
-        beta = normalize(-theta - alpha)
-        beta = math.degrees(beta)
+        beta = -theta - alpha#normalize(-theta - alpha)
+        # beta = math.degrees(beta)
 
         # Controller constants
         k_rho = 0.3 / 3
