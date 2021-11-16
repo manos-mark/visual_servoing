@@ -57,9 +57,9 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
         message.translational.x, message.translational.y, message.translational.z = tvec[0][0][0], tvec[0][0][1], tvec[0][0][2]
         
         # if the id[0] is the current position
-        if id[0] == 1: 
+        if id[0] == 0: 
           current_pub.publish(message)
-        # elif id[0] == 1:
+        elif id[0] == 1:
           target_pub.publish(message)
 
             

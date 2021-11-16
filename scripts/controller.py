@@ -51,7 +51,7 @@ class Controller:
             self.curr_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
             
             r = R.from_matrix(rotational_matrix)
-            self.theta = r.as_euler('XYZ', degrees=True)[2]
+            self.theta = r.as_euler('XYZ', degrees=False)[2]
             # print('\n', 'rotational_matrix\n', rotational_matrix)
             # print('\n', 'translational_vector\n', translational_vector)
             # print('\n', 'homogenious_matrix\n', homogenious_matrix)
