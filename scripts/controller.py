@@ -110,7 +110,7 @@ class Controller:
         # Publish zero velocities when the distance to target is less than the distance error
         # print(f'\ntheta: {math.degrees(theta)}, rho: {rho}. alpha: {math.degrees(alpha)} beta: {math.degrees(beta)}')
         
-        if rho < 0.08:
+        if rho < 0.01:
             print('Target reached!')
             twist = Twist()
             twist.linear.x = 0
@@ -141,7 +141,7 @@ class Controller:
                 twist.angular.z = w 
             
             # Publish velocity to robot
-            pub.publish(twist)
+            # pub.publish(twist)
 
 
 def normalize(angle):
