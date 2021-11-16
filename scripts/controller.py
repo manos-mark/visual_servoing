@@ -49,7 +49,7 @@ class Controller:
         translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
         homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
         self.curr_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
-
+        print('\nself.curr_homogenious_matrix: \n', self.curr_homogenious_matrix)
         r = R.from_matrix(rotational_matrix)
         self.theta = r.as_euler('XYZ', degrees=False)[2]
             # print('\n', 'rotational_matrix\n', rotational_matrix)
@@ -65,6 +65,7 @@ class Controller:
             translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
             homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
             self.target_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
+            print('\nself.target_homogenious_matrix: \n', self.target_homogenious_matrix)
 
     def move_robot(self):
         if (self.curr_homogenious_matrix is None) or (self.target_homogenious_matrix is None):
@@ -73,6 +74,7 @@ class Controller:
         t = np.matmul(self.curr_homogenious_matrix, np.linalg.inv(self.target_homogenious_matrix))
         dx = t[0][3]
         dy = t[1][3]
+        print('\n final_homogenious: \n', t)
 
         rotational_matrix = np.array([
                                         [t[0][0], t[0][1], t[0][2]],
@@ -80,6 +82,8 @@ class Controller:
                                         [t[2][0], t[2][1], t[2][2]],
                                     ])
         
+        # r = R.from_matrix(rotational_matrix)
+        # theta = r.as_euler('XYZ', degrees=False)[2]
         theta = self.theta #cv2.Rodrigues(rotational_matrix)[0][2]
         # theta = math.degrees(theta)
 
@@ -104,7 +108,7 @@ class Controller:
         # beta_der = -k_rho * math.sin(alpha)
 
         # Publish zero velocities when the distance to target is less than the distance error
-        print(f'\ntheta: {math.degrees(theta)}, rho: {rho}. alpha: {math.degrees(alpha)} beta: {math.degrees(beta)}')
+        # print(f'\ntheta: {math.degrees(theta)}, rho: {rho}. alpha: {math.degrees(alpha)} beta: {math.degrees(beta)}')
         
         if rho < 0.08:
             print('Target reached!')
