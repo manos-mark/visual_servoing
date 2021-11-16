@@ -6,6 +6,7 @@ import rospy
 import time
 import cv2
 
+from scipy.spatial.transform import Rotation as R
 from geometry_msgs.msg import Twist
 from numpy.lib.function_base import _calculate_shapes
 from visual_servoing.msg import Pose_estimation_vectors
@@ -20,6 +21,7 @@ class Controller:
         self.current_time = 0
         self.target_homogenious_matrix = None
         self.curr_homogenious_matrix = None
+        self.theta = None
         self.move_robot()
     # def control(self, distance_to_target, current_theta, dt, current_pos, target_pos):
     #     target_theta = self.calculate_theta(current_pos, target_pos)
@@ -47,6 +49,8 @@ class Controller:
         translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
         homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
         self.curr_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
+        r = R.from_matrix(rotational_matrix)
+        self.theta = r.as_euler('XYZ', degrees=True)[2]
             # print('\n', 'rotational_matrix\n', rotational_matrix)
             # print('\n', 'translational_vector\n', translational_vector)
             # print('\n', 'homogenious_matrix\n', homogenious_matrix)
@@ -77,7 +81,7 @@ class Controller:
                                         [t[2][0], t[2][1], t[2][2]],
                                     ])
         
-        theta = cv2.Rodrigues(rotational_matrix)[0][2]
+        theta = self.theta #cv2.Rodrigues(rotational_matrix)[0][2]
         # theta = math.degrees(theta)
 
         # distance to target
