@@ -42,11 +42,11 @@ class Controller:
     #         return target_theta, new_current_pos, theta_error, distance_error
 
     def set_current_pos(self, data: Pose_estimation_vectors):
-        if self.curr_homogenious_matrix is None:
-            rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))
-            translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
-            homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
-            self.curr_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
+        # if self.curr_homogenious_matrix is None:
+        rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))
+        translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
+        homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
+        self.curr_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
             # print('\n', 'rotational_matrix\n', rotational_matrix)
             # print('\n', 'translational_vector\n', translational_vector)
             # print('\n', 'homogenious_matrix\n', homogenious_matrix)
@@ -76,14 +76,14 @@ class Controller:
                                     ])
         
         theta = cv2.Rodrigues(rotational_matrix)[0][2]
-        theta = math.degrees(theta)
+        # theta = math.degrees(theta)
 
         # distance to target
         rho = math.sqrt(math.pow(dy, 2) + math.pow(dx, 2)) # self.distance_to_target(self.current_pos, self.target_pos)
 
         # angle between X axis and the orientation of the robot
         alpha = -theta + math.atan2(dx, dy)#normalize(-theta + math.atan2(dy, dx))
-        alpha = math.degrees(alpha)
+        # alpha = math.degrees(alpha)
 
         # angle between the orientation of the robot and the target orientation
         beta = -theta - alpha#normalize(-theta - alpha)
@@ -99,20 +99,18 @@ class Controller:
         # beta_der = -k_rho * math.sin(alpha)
 
         # Publish zero velocities when the distance to target is less than the distance error
-        print(f'\ntheta: {theta}, rho: {rho}. alpha: {alpha} beta: {beta}')
+        print(f'\ntheta: {math.degrees(theta)}, rho: {rho}. alpha: {math.degrees(alpha)} beta: {math.degrees(beta)}')
         
         if rho < 0.08:
-            # print('Target reached!')
+            print('Target reached!')
             twist = Twist()
             twist.linear.x = 0
             twist.angular.z = 0
             pub.publish(twist)
         else:
             v = k_rho * rho
-            # if rho < 0:
-            #     v = -v
                 
-            w = (k_alpha * alpha + k_beta * beta)
+            w = -(k_alpha * alpha + k_beta * beta)
             if alpha < 0:
                 w = -w
 
@@ -134,7 +132,7 @@ class Controller:
                 twist.angular.z = w 
             
             # Publish velocity to robot
-            # pub.publish(twist)
+            pub.publish(twist)
 
 
 def normalize(angle):
