@@ -57,10 +57,25 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
         message.translational.x, message.translational.y, message.translational.z = tvec[0][0][0], tvec[0][0][1], tvec[0][0][2]
         
         # if the id[0] is the current position
-        if id[0] == 0: 
-          current_pub.publish(message)
+        if id[0] == 1: 
+          # current_pub.publish(message)
+          cur_msg = Pose_estimation_vectors()
+          cur_msg.rotational.x = -2.2510809733603536
+          cur_msg.rotational.y = -2.183862783888941
+          cur_msg.rotational.z = 0.012626837422556145
+          cur_msg.translational.x = -0.26780215575423916
+          cur_msg.translational.y = -0.049998194180917985
+          cur_msg.translational.z = 0.739893706166235
+          current_pub.publish(cur_msg)
         # elif id[0] == 1:
-          target_pub.publish(message)
+          tar_msg = Pose_estimation_vectors()
+          tar_msg.rotational.x = -2.1234665800184387
+          tar_msg.rotational.y = -2.286227829685306
+          tar_msg.rotational.z = -0.02135709201659134
+          tar_msg.translational.x = -0.27216700583615216
+          tar_msg.translational.y = -0.4138658948790167
+          tar_msg.translational.z = 0.7414195187618529
+          target_pub.publish(tar_msg)
 
             
     return frame
@@ -97,9 +112,26 @@ def callback(data):
       
 def receive_message():   
   # Node is subscribing to the video_frames topic
-  camera = rospy.get_param('camera')
-  print(camera)
-  rospy.Subscriber(camera, Image, callback)
+  # camera = rospy.get_param('camera')
+  # print(camera)
+  # rospy.Subscriber(camera, Image, callback)
+  cur_msg = Pose_estimation_vectors()
+  cur_msg.rotational.x = -2.2510809733603536
+  cur_msg.rotational.y = -2.183862783888941
+  cur_msg.rotational.z = 0.012626837422556145
+  cur_msg.translational.x = -0.26780215575423916
+  cur_msg.translational.y = -0.049998194180917985
+  cur_msg.translational.z = 0.739893706166235
+  current_pub.publish(cur_msg)
+
+  tar_msg = Pose_estimation_vectors()
+  tar_msg.rotational.x = -2.1234665800184387
+  tar_msg.rotational.y = -2.286227829685306
+  tar_msg.rotational.z = -0.02135709201659134
+  tar_msg.translational.x = -0.27216700583615216
+  tar_msg.translational.y = -0.4138658948790167
+  tar_msg.translational.z = 0.7414195187618529
+  target_pub.publish(tar_msg)
  
   # spin() simply keeps python from exiting until this node is stopped
   rospy.spin()

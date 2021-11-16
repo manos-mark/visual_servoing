@@ -42,11 +42,11 @@ class Controller:
     #         return target_theta, new_current_pos, theta_error, distance_error
 
     def set_current_pos(self, data: Pose_estimation_vectors):
-        # if self.curr_homogenious_matrix is None:
-        rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))
-        translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
-        homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
-        self.curr_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
+        if self.curr_homogenious_matrix is None:
+            rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))
+            translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
+            homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
+            self.curr_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
             # print('\n', 'rotational_matrix\n', rotational_matrix)
             # print('\n', 'translational_vector\n', translational_vector)
             # print('\n', 'homogenious_matrix\n', homogenious_matrix)
@@ -90,18 +90,22 @@ class Controller:
         # beta = math.degrees(beta)
 
         # Controller constants
-        k_rho = 0.3 / 3
-        k_alpha = 0.8 / 3
-        k_beta = -0.15 / 3
+        k_rho = 0.3
+        k_alpha = 0.8
+        k_beta = -0.15
 
-        # rho_der = -k_rho * rho * math.cos(alpha)
-        # alpha_der = k_rho * math.sin(alpha) - k_alpha * alpha - k_beta * beta
-        # beta_der = -k_rho * math.sin(alpha)
+        rho_der = -k_rho * rho * math.cos(alpha)
+        alpha_der = k_rho * math.sin(alpha) - k_alpha * alpha - k_beta * beta
+        beta_der = -k_rho * math.sin(alpha)
+
+        rho = rho_der
+        alpha = alpha_der
+        beta = beta_der
 
         # Publish zero velocities when the distance to target is less than the distance error
-        print(f'\ntheta: {math.degrees(theta)}, rho: {rho}. alpha: {math.degrees(alpha)} beta: {math.degrees(beta)}')
+        print(f'\ntheta: {theta}, rho: {rho}. alpha: {alpha} beta: {beta}')
         
-        if rho < 0.08:
+        if np.abs(rho) < 0.01:
             print('Target reached!')
             twist = Twist()
             twist.linear.x = 0
@@ -133,10 +137,6 @@ class Controller:
             
             # Publish velocity to robot
             pub.publish(twist)
-
-
-def normalize(angle):
-    return np.arctan2(np.sin(angle),np.cos(angle))
     
 if __name__ == '__main__':
     pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
