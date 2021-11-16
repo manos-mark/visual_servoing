@@ -42,11 +42,11 @@ class Controller:
     #         return target_theta, new_current_pos, theta_error, distance_error
 
     def set_current_pos(self, data: Pose_estimation_vectors):
-        if self.curr_homogenious_matrix is None:
-            rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))
-            translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
-            homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
-            self.curr_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
+        # if self.curr_homogenious_matrix is None:
+        rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))
+        translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
+        homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
+        self.curr_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
             # print('\n', 'rotational_matrix\n', rotational_matrix)
             # print('\n', 'translational_vector\n', translational_vector)
             # print('\n', 'homogenious_matrix\n', homogenious_matrix)
@@ -62,8 +62,10 @@ class Controller:
             self.target_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
 
     def move_robot(self):
-        if (self.curr_homogenious_matrix is None) or (self.target_homogenious_matrix is None):
-            return 
+        r = rospy.Rate(1)
+
+        while (self.curr_homogenious_matrix is None) or (self.target_homogenious_matrix is None):
+            continue
 
         t = np.matmul(self.curr_homogenious_matrix, np.linalg.inv(self.target_homogenious_matrix))
         dx = t[0][3]
@@ -88,7 +90,7 @@ class Controller:
         # angle between the orientation of the robot and the target orientation
         beta = -theta - alpha#normalize(-theta - alpha)
         # beta = math.degrees(beta)
-        while True: 
+        while np.abs(rho) > 0.01: 
             # Controller constants
             k_rho = 0.3
             k_alpha = 0.8
@@ -103,40 +105,41 @@ class Controller:
             beta = beta_der
 
             # Publish zero velocities when the distance to target is less than the distance error
-            print(f'\ntheta: {theta}, rho: {rho}. alpha: {alpha} beta: {beta}')
+            print(f'\ntheta: {theta}, rho: {rho_der}. alpha: {alpha_der} beta: {beta_der}')
             
-            if np.abs(rho) < 0.01:
-                print('Target reached!')
-                twist = Twist()
-                twist.linear.x = 0
-                twist.angular.z = 0
-                pub.publish(twist)
+            v = k_rho * rho_der                
+
+            w = -(k_alpha * alpha_der + k_beta * beta_der)
+            if alpha < 0:
+                w = -w
+
+            twist = Twist()
+
+            # Set maximum and minimum values of turtlebot burger
+            if v > 0.2:
+                twist.linear.x = 0.2
+            elif v < -0.2:
+                twist.linear.x = -0.2
             else:
-                v = k_rho * rho
-                    
-                w = -(k_alpha * alpha + k_beta * beta)
-                if alpha < 0:
-                    w = -w
+                twist.linear.x = v
 
-                twist = Twist()
+            if w > 2.84:
+                twist.angular.z = 2.84
+            elif w < -2.84:
+                twist.angular.z = -2.84
+            else:      
+                twist.angular.z = w 
+            
+            # Publish velocity to robot
+            r.sleep()
+            pub.publish(twist)
+            # self.r.sleep()# rospy.
 
-                # Set maximum and minimum values of turtlebot burger
-                if v > 0.2:
-                    twist.linear.x = 0.2
-                elif v < -0.2:
-                    twist.linear.x = -0.2
-                else:
-                    twist.linear.x = v
-
-                if w > 2.84:
-                    twist.angular.z = 2.84
-                elif w < -2.84:
-                    twist.angular.z = -2.84
-                else:      
-                    twist.angular.z = w 
-                
-                # Publish velocity to robot
-                pub.publish(twist)
+        print('Target reached!')
+        twist = Twist()
+        twist.linear.x = 0
+        twist.angular.z = 0
+        pub.publish(twist)
         
 if __name__ == '__main__':
     pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
