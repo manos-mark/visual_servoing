@@ -75,7 +75,7 @@ class Controller:
                                         [t[2][0], t[2][1], t[2][2]],
                                     ])
         
-        theta = normalize(cv2.Rodrigues(rotational_matrix)[0][2])
+        theta = cv2.Rodrigues(rotational_matrix)[0][2]
         theta = math.degrees(theta)
 
         # distance to target
