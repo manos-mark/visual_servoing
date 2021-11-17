@@ -19,9 +19,10 @@ class Controller:
         self.forward_speed_gain = 1 # forward_speed_gain
         self.rotational_speed_gain = 1 # rotational_speed_gain
         self.current_time = 0
-        self.theta = None
         self.target_homogenious_matrix = None
         self.curr_homogenious_matrix = None
+
+        rospy.on_shutdown(self.shutdown)
 
     # def control(self, distance_to_target, current_theta, dt, current_pos, target_pos):
     #     target_theta = self.calculate_theta(current_pos, target_pos)
@@ -50,8 +51,7 @@ class Controller:
         homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
         self.curr_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
         print('\nself.curr_homogenious_matrix: \n', self.curr_homogenious_matrix)
-        r = R.from_matrix(rotational_matrix)
-        self.theta = r.as_euler('XYZ', degrees=False)[2]
+        
             # print('\n', 'rotational_matrix\n', rotational_matrix)
             # print('\n', 'translational_vector\n', translational_vector)
             # print('\n', 'homogenious_matrix\n', homogenious_matrix)
@@ -72,6 +72,7 @@ class Controller:
             return 
 
         t = np.matmul(self.curr_homogenious_matrix, np.linalg.inv(self.target_homogenious_matrix))
+
         dx = t[0][3]
         dy = t[1][3]
         print('\n final_homogenious: \n', t)
@@ -82,9 +83,8 @@ class Controller:
                                         [t[2][0], t[2][1], t[2][2]],
                                     ])
         
-        # r = R.from_matrix(rotational_matrix)
-        # theta = r.as_euler('XYZ', degrees=False)[2]
-        theta = self.theta #cv2.Rodrigues(rotational_matrix)[0][2]
+        r = R.from_matrix(rotational_matrix)
+        theta = r.as_euler('XYZ', degrees=False)[2]
         # theta = math.degrees(theta)
 
         # distance to target
@@ -112,10 +112,7 @@ class Controller:
         
         if rho < 0.01:
             print('Target reached!')
-            twist = Twist()
-            twist.linear.x = 0
-            twist.angular.z = 0
-            pub.publish(twist)
+            self.shutdown()
         else:
             v = k_rho * rho
                 
@@ -141,8 +138,19 @@ class Controller:
                 twist.angular.z = w 
             
             # Publish velocity to robot
-            # pub.publish(twist)
+            pub.publish(twist)
 
+    def shutdown(slef):
+        rospy.loginfo("Shutting down. cmd_vel will be 0")
+
+        twist = Twist()
+        twist.linear.x = 0
+        twist.linear.y = 0
+        twist.linear.z = 0
+        twist.angular.x = 0
+        twist.angular.y = 0
+        twist.angular.z = 0
+        pub.publish(twist) 
 
 def normalize(angle):
     return np.arctan2(np.sin(angle),np.cos(angle))
