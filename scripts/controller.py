@@ -21,9 +21,11 @@ class Controller:
         self.current_time = 0
         self.target_homogenious_matrix = None
         self.curr_homogenious_matrix = None
+        self.theta_current = None
+        self.theta_target = None
 
-        rospy.on_shutdown(self.shutdown)
-
+        rospy.on_shutdown(self.stop_robot)
+        self.move_robot()
     # def control(self, distance_to_target, current_theta, dt, current_pos, target_pos):
     #     target_theta = self.calculate_theta(current_pos, target_pos)
 
@@ -50,14 +52,9 @@ class Controller:
         translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
         homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
         self.curr_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
-        print('\nself.curr_homogenious_matrix: \n', self.curr_homogenious_matrix)
         
-            # print('\n', 'rotational_matrix\n', rotational_matrix)
-            # print('\n', 'translational_vector\n', translational_vector)
-            # print('\n', 'homogenious_matrix\n', homogenious_matrix)
-
-        if (self.curr_homogenious_matrix is not None) and (self.target_homogenious_matrix is not None):
-            self.move_robot()
+        r = R.from_matrix(rotational_matrix)
+        self.theta_current = r.as_euler('XYZ', degrees=False)[2]
                 
     def set_target_pos(self, data: Pose_estimation_vectors):
         if self.target_homogenious_matrix is None:
@@ -65,60 +62,61 @@ class Controller:
             translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
             homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
             self.target_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
-            print('\nself.target_homogenious_matrix: \n', self.target_homogenious_matrix)
+            
+            r = R.from_matrix(rotational_matrix)
+            self.theta_target = r.as_euler('XYZ', degrees=False)[2]
 
     def move_robot(self):
-        if (self.curr_homogenious_matrix is None) or (self.target_homogenious_matrix is None):
-            return 
+        rho = float("inf")
+        r = rospy.Rate(1.0)
 
-        t = np.matmul(self.curr_homogenious_matrix, np.linalg.inv(self.target_homogenious_matrix))
+        while (rho > 0.03) and not rospy.is_shutdown(): 
+            if self.theta_target is None:
+                continue
+            thetag = math.radians(self.theta_target)
 
-        dx = t[0][3]
-        dy = t[1][3]
-        print('\n final_homogenious: \n', t)
+            theta = math.radians(self.theta_current)
+            if (self.curr_homogenious_matrix is None) or (self.target_homogenious_matrix is None):
+                return
 
-        rotational_matrix = np.array([
-                                        [t[0][0], t[0][1], t[0][2]],
-                                        [t[1][0], t[1][1], t[1][2]],
-                                        [t[2][0], t[2][1], t[2][2]],
-                                    ])
-        
-        r = R.from_matrix(rotational_matrix)
-        theta = r.as_euler('XYZ', degrees=False)[2]
-        # theta = math.degrees(theta)
+            t = np.matmul(self.curr_homogenious_matrix, np.linalg.inv(self.target_homogenious_matrix))
+            dx = t[0][3]
+            dy = t[1][3]
 
-        # distance to target
-        rho = math.sqrt(math.pow(dy, 2) + math.pow(dx, 2)) # self.distance_to_target(self.current_pos, self.target_pos)
+            rotational_matrix = np.array([
+                                            [t[0][0], t[0][1], t[0][2]],
+                                            [t[1][0], t[1][1], t[1][2]],
+                                            [t[2][0], t[2][1], t[2][2]],
+                                        ])
 
-        # angle between X axis and the orientation of the robot
-        alpha = -theta + math.atan2(dx, dy)#normalize(-theta + math.atan2(dy, dx))
-        # alpha = math.degrees(alpha)
+            # distance to target
+            rho = math.sqrt(math.pow(dy, 2) + math.pow(dx, 2)) # self.distance_to_target(self.current_pos, self.target_pos)
 
-        # angle between the orientation of the robot and the target orientation
-        beta = -theta - alpha#normalize(-theta - alpha)
-        # beta = math.degrees(beta)
+            # angle between X axis and the orientation of the robot
+            alpha = normalize(np.arctan2(dy, dx) - theta)
+            # alpha = math.degrees(alpha)
 
-        # Controller constants
-        k_rho = 0.3 / 3
-        k_alpha = 0.8 / 3
-        k_beta = -0.15 / 3
+            # angle between the orientation of the robot and the target orientation
+            beta = normalize(thetag - np.arctan2(dy, dx)) #-theta - alpha
+            # beta = math.degrees(beta)
+            
+            # Controller constants
+            k_rho = 0.3
+            k_alpha = 0.8
+            k_beta = -0.15
 
-        # rho_der = -k_rho * rho * math.cos(alpha)
-        # alpha_der = k_rho * math.sin(alpha) - k_alpha * alpha - k_beta * beta
-        # beta_der = -k_rho * math.sin(alpha)
+            # rho_der = -k_rho * rho * math.cos(alpha)
+            # alpha_der = k_rho * math.sin(alpha) - k_alpha * alpha - k_beta * beta
+            # beta_der = -k_rho * math.sin(alpha)
 
-        # Publish zero velocities when the distance to target is less than the distance error
-        # print(f'\ntheta: {math.degrees(theta)}, rho: {rho}. alpha: {math.degrees(alpha)} beta: {math.degrees(beta)}')
-        
-        if rho < 0.01:
-            print('Target reached!')
-            self.shutdown()
-        else:
-            v = k_rho * rho
-                
-            w = -(k_alpha * alpha + k_beta * beta)
-            if alpha < 0:
-                w = -w
+            # Publish zero velocities when the distance to target is less than the distance error
+            print(f'\ntheta: {theta}, rho: {rho}. alpha: {alpha} beta: {beta}')
+            
+            v = k_rho * rho                
+
+            w = (k_alpha * alpha + k_beta * beta)
+            # if alpha < 0:
+            #     w = -w
 
             twist = Twist()
 
@@ -138,23 +136,27 @@ class Controller:
                 twist.angular.z = w 
             
             # Publish velocity to robot
-            pub.publish(twist)
+            try:
+                pub.publish(twist)
+            except:
+                print('Publisher is closed')
 
-    def shutdown(slef):
-        rospy.loginfo("Shutting down. cmd_vel will be 0")
+            r.sleep()
 
+        self.stop_robot()
+
+        if rho < 0.03:
+            print('Target reached!')
+
+    def stop_robot(self):
         twist = Twist()
         twist.linear.x = 0
-        twist.linear.y = 0
-        twist.linear.z = 0
-        twist.angular.x = 0
-        twist.angular.y = 0
         twist.angular.z = 0
-        pub.publish(twist) 
+        pub.publish(twist)    
 
 def normalize(angle):
     return np.arctan2(np.sin(angle),np.cos(angle))
-    
+        
 if __name__ == '__main__':
     pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
     rospy.init_node('robot_controller')
