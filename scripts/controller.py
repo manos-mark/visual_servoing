@@ -68,7 +68,6 @@ class Controller:
 
     def move_robot(self):
         rho = float("inf")
-        r = rospy.Rate(1.0)
 
         while (rho > 0.03) and not rospy.is_shutdown(): 
             if self.theta_target is None:
@@ -141,7 +140,7 @@ class Controller:
             except:
                 print('Publisher is closed')
 
-            r.sleep()
+            rospy.sleep(0.1)
 
         self.stop_robot()
 
