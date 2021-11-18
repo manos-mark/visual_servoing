@@ -52,9 +52,11 @@ class Controller:
         translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
         homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
         self.curr_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
+        # print('\n Current Homogemeous: \n',self.curr_homogenious_matrix)
         
         r = R.from_matrix(rotational_matrix)
         self.theta_current = r.as_euler('XYZ', degrees=False)[2]
+        # print('theta_current: ', math.degrees(self.theta_current))
                 
     def set_target_pos(self, data: Pose_estimation_vectors):
         if self.target_homogenious_matrix is None:
@@ -65,32 +67,82 @@ class Controller:
             
             r = R.from_matrix(rotational_matrix)
             self.theta_target = r.as_euler('XYZ', degrees=False)[2]
+        # print('theta_target: ', math.degrees(self.theta_target))
+        # print('\n Target Homogeneous\n',self.target_homogenious_matrix)
 
     def move_robot(self):
         rho = float("inf")
+        beta = float("inf")
 
-        while (rho > 0.03) and not rospy.is_shutdown(): 
+        # Controller constants
+        k_rho = 0.3
+        k_alpha = 0.8
+        k_beta = 0.950
+
+        while (abs(beta) > 0.007) and (not rospy.is_shutdown()):
             if self.theta_target is None:
                 continue
-            thetag = math.radians(self.theta_target)
+            # thetag = math.radians(self.theta_target)
+            thetag = self.theta_target
 
-            theta = math.radians(self.theta_current)
+            if self.theta_current is None:
+                continue
+            # theta = math.radians(self.theta_current)
+            theta = self.theta_current
+            
             if (self.curr_homogenious_matrix is None) or (self.target_homogenious_matrix is None):
                 return
 
-            t = np.matmul(self.curr_homogenious_matrix, np.linalg.inv(self.target_homogenious_matrix))
+            # print('\n cur_theta: ', theta, '\t\t target_theta: ', thetag)
+
+            t = np.matmul(np.linalg.inv(self.curr_homogenious_matrix), self.target_homogenious_matrix)
             dx = t[0][3]
             dy = t[1][3]
+
+            beta = math.atan2(dy, dx)
+
+            v = 0
+            w = k_beta * beta
+            # print('beta: ',beta, '\tdx: ',dx, '\tdy: ',dy)
+            # print('w: ',w)
+            self.send_velocity_to_robot(v,w)
+
+        while (rho > 0.09) and not rospy.is_shutdown(): 
+            k_beta = -0.15
+            if self.theta_target is None:
+                continue
+            # thetag = math.radians(self.theta_target)
+            thetag = self.theta_target
+
+            if self.theta_current is None:
+                continue
+            # theta = math.radians(self.theta_current)
+            theta = self.theta_current
+            
+            if (self.curr_homogenious_matrix is None) or (self.target_homogenious_matrix is None):
+                return
+
+            # print('\n cur_theta: ', theta, '\t\t target_theta: ', thetag)
+
+            t = np.matmul(self.curr_homogenious_matrix, np.linalg.inv(self.target_homogenious_matrix))
+
+            dx = t[0][3]
+            dy = t[1][3]
+
+            # print('\n dx: ', dx, '\t\t dy: ', dy)
 
             rotational_matrix = np.array([
                                             [t[0][0], t[0][1], t[0][2]],
                                             [t[1][0], t[1][1], t[1][2]],
                                             [t[2][0], t[2][1], t[2][2]],
                                         ])
-
+            # r = R.from_matrix(rotational_matrix)
+            # theta = r.as_euler('XYZ', degrees=False)[2]
+            # print('theta: ', theta)
+            # print(f"Rotational Matrix: \n {rotational_matrix}")
             # distance to target
             rho = math.sqrt(math.pow(dy, 2) + math.pow(dx, 2)) # self.distance_to_target(self.current_pos, self.target_pos)
-
+# 
             # angle between X axis and the orientation of the robot
             alpha = normalize(np.arctan2(dy, dx) - theta)
             # alpha = math.degrees(alpha)
@@ -98,60 +150,59 @@ class Controller:
             # angle between the orientation of the robot and the target orientation
             beta = normalize(thetag - np.arctan2(dy, dx)) #-theta - alpha
             # beta = math.degrees(beta)
-            
-            # Controller constants
-            k_rho = 0.3
-            k_alpha = 0.8
-            k_beta = -0.15
 
             # rho_der = -k_rho * rho * math.cos(alpha)
             # alpha_der = k_rho * math.sin(alpha) - k_alpha * alpha - k_beta * beta
             # beta_der = -k_rho * math.sin(alpha)
 
             # Publish zero velocities when the distance to target is less than the distance error
-            print(f'\ntheta: {theta}, rho: {rho}. alpha: {alpha} beta: {beta}')
+            print(f'\ntheta: {math.degrees(theta)}, rho: {rho}. alpha: {math.degrees(alpha)} beta: {math.degrees(beta)}')
             
             v = k_rho * rho                
 
-            w = (k_alpha * alpha + k_beta * beta)
+            w = 0#(k_alpha * alpha + k_beta * beta)
+            self.send_velocity_to_robot(v,w)
             # if alpha < 0:
             #     w = -w
 
-            twist = Twist()
-
-            # Set maximum and minimum values of turtlebot burger
-            if v > 0.2:
-                twist.linear.x = 0.2
-            elif v < -0.2:
-                twist.linear.x = -0.2
-            else:
-                twist.linear.x = v
-
-            if w > 2.84:
-                twist.angular.z = 2.84
-            elif w < -2.84:
-                twist.angular.z = -2.84
-            else:      
-                twist.angular.z = w 
-            
-            # Publish velocity to robot
-            try:
-                pub.publish(twist)
-            except:
-                print('Publisher is closed')
-
-            rospy.sleep(0.1)
-
         self.stop_robot()
 
-        if rho < 0.03:
+        if rho < 0.026:
             print('Target reached!')
+
+    def send_velocity_to_robot(self, v, w):
+        twist = Twist()
+
+        # Set maximum and minimum values of turtlebot burger
+        if v > 0.2:
+            twist.linear.x = 0.2
+        elif v < -0.2:
+            twist.linear.x = -0.2
+        else:
+            twist.linear.x = v
+
+        if w > 2.84:
+            twist.angular.z = 2.84
+        elif w < -2.84:
+            twist.angular.z = -2.84
+        else:      
+            twist.angular.z = w 
+        
+        # Publish velocity to robot
+        try:
+            pub.publish(twist)
+        except:
+            print('Publisher is closed')
+        rospy.sleep(0.01)
 
     def stop_robot(self):
         twist = Twist()
         twist.linear.x = 0
         twist.angular.z = 0
-        pub.publish(twist)    
+        pub.publish(twist) 
+
+        # rospy.sleep(10)
+        # self.move_robot()   
 
 def normalize(angle):
     return np.arctan2(np.sin(angle),np.cos(angle))

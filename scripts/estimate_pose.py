@@ -42,7 +42,7 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
       for index, id in enumerate(ids):
         rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(
           corners[index], 
-          0.1, 
+          0.15, 
           matrix_coefficients,
           distortion_coefficients
         )
@@ -50,7 +50,7 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
         cv2.aruco.drawDetectedMarkers(frame, corners) 
 
           # Draw Axis
-        cv2.aruco.drawAxis(frame, matrix_coefficients, distortion_coefficients, rvec, tvec, 0.01)  
+        cv2.aruco.drawAxis(frame, matrix_coefficients, distortion_coefficients, rvec, tvec, 0.1)  
         # print('Rotational vector:', rvec[0][0], 'Translational vector:', tvec[0][0])
         
         message.rotational.x, message.rotational.y, message.rotational.z  = rvec[0][0][0], rvec[0][0][1], rvec[0][0][2]
