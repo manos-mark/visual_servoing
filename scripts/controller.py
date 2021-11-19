@@ -72,6 +72,53 @@ class Controller:
 
     def move_robot(self):
         rho = float("inf")
+        # thetag = math.radians(thetag_degrees)
+        k_rho = 0.3
+        k_alpha = 0.8
+        k_beta = -0.15
+        constant_vel = 0.3
+
+        while rho>0.05:
+            if self.theta_target is None:
+                continue
+            # thetag = math.radians(self.theta_target)
+            thetag = self.theta_target
+
+            if self.theta_current is None:
+                continue
+            # theta = math.radians(self.theta_current)
+            theta = self.theta_current
+            
+            if (self.curr_homogenious_matrix is None) or (self.target_homogenious_matrix is None):
+                continue
+
+            # print('\n cur_theta: ', theta, '\t\t target_theta: ', thetag)
+
+            t = np.matmul(np.linalg.inv(self.curr_homogenious_matrix), self.target_homogenious_matrix)
+            dx = t[0][3]
+            dy = t[1][3]
+
+            rho = math.sqrt(math.pow(dy, 2) + math.pow(dx, 2))
+            alpha = normalize(np.arctan2(dy, dx) - theta)
+            beta = normalize(thetag - np.arctan2(dy, dx))
+            
+            v = k_rho * rho
+            w = k_alpha * alpha + k_beta * beta
+            print(f'\ntheta: {math.degrees(theta)}, rho: {rho}. alpha: {math.degrees(alpha)} beta: {math.degrees(beta)}')
+
+            if constant_vel:
+                abs_v = abs(v)
+                v = v / abs_v * constant_vel
+                w = w / abs_v * constant_vel
+
+            self.send_velocity_to_robot(v,w)
+
+            rospy.sleep(0.01)
+
+        self.stop_robot()
+
+    def move_robot_old(self):
+        rho = float("inf")
         beta = float("inf")
 
         # Controller constants
