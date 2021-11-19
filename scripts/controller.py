@@ -79,7 +79,8 @@ class Controller:
         k_alpha = 0.8
         k_beta = 0.950
 
-        while (abs(beta) > 0.007) and (not rospy.is_shutdown()):
+        # Fix the initial angle 0.01
+        while abs(beta > 0.009) and (not rospy.is_shutdown()):
             if self.theta_target is None:
                 continue
             # thetag = math.radians(self.theta_target)
@@ -91,7 +92,7 @@ class Controller:
             theta = self.theta_current
             
             if (self.curr_homogenious_matrix is None) or (self.target_homogenious_matrix is None):
-                return
+                continue
 
             # print('\n cur_theta: ', theta, '\t\t target_theta: ', thetag)
 
@@ -103,10 +104,11 @@ class Controller:
 
             v = 0
             w = k_beta * beta
-            # print('beta: ',beta, '\tdx: ',dx, '\tdy: ',dy)
+            print('beta: ',beta, '\tdx: ',dx, '\tdy: ',dy)
             # print('w: ',w)
             self.send_velocity_to_robot(v,w)
 
+        # Go to target 0.09
         while (rho > 0.09) and not rospy.is_shutdown(): 
             k_beta = -0.15
             if self.theta_target is None:
@@ -124,46 +126,80 @@ class Controller:
 
             # print('\n cur_theta: ', theta, '\t\t target_theta: ', thetag)
 
-            t = np.matmul(self.curr_homogenious_matrix, np.linalg.inv(self.target_homogenious_matrix))
+            t = np.matmul(np.linalg.inv(self.curr_homogenious_matrix), self.target_homogenious_matrix)
 
             dx = t[0][3]
             dy = t[1][3]
 
             # print('\n dx: ', dx, '\t\t dy: ', dy)
 
-            rotational_matrix = np.array([
-                                            [t[0][0], t[0][1], t[0][2]],
-                                            [t[1][0], t[1][1], t[1][2]],
-                                            [t[2][0], t[2][1], t[2][2]],
-                                        ])
-            # r = R.from_matrix(rotational_matrix)
-            # theta = r.as_euler('XYZ', degrees=False)[2]
-            # print('theta: ', theta)
+            # rotational_matrix = np.array([
+            #                                 [t[0][0], t[0][1], t[0][2]],
+            #                                 [t[1][0], t[1][1], t[1][2]],
+            #                                 [t[2][0], t[2][1], t[2][2]],
+            #                             ])
+
             # print(f"Rotational Matrix: \n {rotational_matrix}")
             # distance to target
             rho = math.sqrt(math.pow(dy, 2) + math.pow(dx, 2)) # self.distance_to_target(self.current_pos, self.target_pos)
 # 
             # angle between X axis and the orientation of the robot
-            alpha = normalize(np.arctan2(dy, dx) - theta)
-            # alpha = math.degrees(alpha)
+            # alpha = normalize(np.arctan2(dy, dx) - theta)
 
             # angle between the orientation of the robot and the target orientation
-            beta = normalize(thetag - np.arctan2(dy, dx)) #-theta - alpha
-            # beta = math.degrees(beta)
+            # beta = normalize(thetag - np.arctan2(dy, dx)) #-theta - alpha
 
             # rho_der = -k_rho * rho * math.cos(alpha)
             # alpha_der = k_rho * math.sin(alpha) - k_alpha * alpha - k_beta * beta
             # beta_der = -k_rho * math.sin(alpha)
 
             # Publish zero velocities when the distance to target is less than the distance error
-            print(f'\ntheta: {math.degrees(theta)}, rho: {rho}. alpha: {math.degrees(alpha)} beta: {math.degrees(beta)}')
+            # print(f'\ntheta: {math.degrees(theta)}, rho: {rho}. alpha: {math.degrees(alpha)} beta: {math.degrees(beta)}')
+            print(f' rho: {rho}')
             
             v = k_rho * rho                
-
-            w = 0#(k_alpha * alpha + k_beta * beta)
+            w = 0
             self.send_velocity_to_robot(v,w)
             # if alpha < 0:
             #     w = -w
+
+        # Fix the final angle
+        beta = float("inf")
+        while (abs(beta) > 0.09) and (not rospy.is_shutdown()):
+            k_beta = 0.950
+            if self.theta_target is None:
+                continue
+            # thetag = math.radians(self.theta_target)
+            thetag = self.theta_target
+
+            if self.theta_current is None:
+                continue
+            # theta = math.radians(self.theta_current)
+            theta = self.theta_current
+            
+            if (self.curr_homogenious_matrix is None) or (self.target_homogenious_matrix is None):
+                continue
+
+            # print('\n cur_theta: ', theta, '\t\t target_theta: ', thetag)
+
+            t = np.matmul(np.linalg.inv(self.curr_homogenious_matrix), self.target_homogenious_matrix)
+            dx = t[0][3]
+            dy = t[1][3]
+
+            rotational_matrix = np.array([
+                                            [t[0][0], t[0][1], t[0][2]],
+                                            [t[1][0], t[1][1], t[1][2]],
+                                            [t[2][0], t[2][1], t[2][2]],
+                                        ])
+            
+            r = R.from_matrix(rotational_matrix)
+            beta = r.as_euler('XYZ', degrees=False)[2]
+
+            v = 0
+            w = k_beta * beta
+            # print('beta: ',beta, '\tdx: ',dx, '\tdy: ',dy)
+            # print('w: ',w)
+            self.send_velocity_to_robot(v,w)
 
         self.stop_robot()
 
@@ -193,7 +229,8 @@ class Controller:
             pub.publish(twist)
         except:
             print('Publisher is closed')
-        rospy.sleep(0.01)
+
+        rospy.sleep(0.1)
 
     def stop_robot(self):
         twist = Twist()
