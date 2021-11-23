@@ -74,7 +74,7 @@ def callback(data):
    
   # Convert ROS Image message to OpenCV image
   # current_frame = br.imgmsg_to_cv2(data)
-  current_frame = np.frombuffer(data.data, dtype=np.uint8).reshape(data.height, data.width, -1)
+  current_frame = np.frombuffer(data.data, dtype=np.uint8).reshape(data.shape[0], data.shape[1], -1)
   
   h,  w = current_frame.shape[:2]
   newcameramtx, roi = cv2.getOptimalNewCameraMatrix(CAMERA_MATRIX, DISTORTION_COEF, (WIDTH,HEIGHT), 1, (WIDTH,HEIGHT))
@@ -119,6 +119,10 @@ if __name__ == '__main__':
   current_pub = rospy.Publisher('current_position', Pose_estimation_vectors, queue_size=10)
   target_pub = rospy.Publisher('target_position', Pose_estimation_vectors, queue_size=10)
 
-  receive_message()
+  # receive_message()
+
+  data = cv2.imread('/home/manos/Desktop/obstacles.png')
+  while not rospy.is_shutdown():
+    callback(data)
 
   
