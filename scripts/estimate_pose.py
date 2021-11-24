@@ -10,7 +10,7 @@ from cv_bridge import CvBridge # Package to convert between ROS and OpenCV Image
 import cv2 # OpenCV library
 import numpy as np
 from utils import ARUCO_DICT, aruco_display, get_calibration_data
-from detect_obstacles import BlobTracker
+from detect_obstacles import ObstacleTracker
 
 
 # Calibration Data
@@ -97,8 +97,8 @@ def callback(data):
 
   cv2.imshow('Estimated Pose', output)
 
-  obstacles_map = blob_detector_object.generate_map(undistort_frame, window)
-  blob_detector_object.detect_blobs(undistort_frame, window, obstacles_map)
+  obstacles_map = obstacle_detector.generate_map(undistort_frame, window)
+  obstacle_detector.draw_map(output, obstacles_map, window, imshow=True)
 
   cv2.waitKey(1)
       
@@ -129,7 +129,7 @@ if __name__ == '__main__':
   hsv_min = (0, 100, 0)
   hsv_max = (5, 255, 255)  
   
-  blob_detector_object = BlobTracker(hsv_min, hsv_max)
+  obstacle_detector = ObstacleTracker(hsv_min, hsv_max)
   
   # We define the detection area [x_min, y_min, x_max, y_max] adimensional (0.0 to 1.0) starting from top left corner
   window = [0.13, 0.05, 0.96, 0.80]
