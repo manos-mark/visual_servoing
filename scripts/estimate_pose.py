@@ -67,7 +67,7 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
             
     return frame
 
-def callback(data):
+def on_image_received(data):
   # Used to convert between ROS and OpenCV images
   br = CvBridge()
  
@@ -75,9 +75,12 @@ def callback(data):
   # rospy.loginfo("receiving video frame")
    
   # Convert ROS Image message to OpenCV image
-  current_frame = br.imgmsg_to_cv2(data, 'bgr8')
+  try:
+    current_frame = br.imgmsg_to_cv2(data, 'bgr8')
+  except:
+    current_frame = np.frombuffer(data.data, dtype=np.uint8).reshape(data.shape[0], data.shape[1], -1)
+
   # current_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2RGB)
-  # current_frame = np.frombuffer(data.data, dtype=np.uint8).reshape(data.shape[0], data.shape[1], -1)
   
   h,  w = current_frame.shape[:2]
   newcameramtx, roi = cv2.getOptimalNewCameraMatrix(CAMERA_MATRIX, DISTORTION_COEF, (WIDTH,HEIGHT), 1, (WIDTH,HEIGHT))
@@ -102,10 +105,10 @@ def callback(data):
 
   cv2.waitKey(1)
       
-def receive_message():   
+def receive_image():   
   # Node is subscribing to the video_frames topic
   camera = rospy.get_param('camera')
-  rospy.Subscriber(camera, Image, callback)
+  rospy.Subscriber(camera, Image, on_image_received)
  
   # spin() simply keeps python from exiting until this node is stopped
   rospy.spin()
@@ -134,11 +137,11 @@ if __name__ == '__main__':
   # We define the detection area [x_min, y_min, x_max, y_max] adimensional (0.0 to 1.0) starting from top left corner
   window = [0.13, 0.05, 0.96, 0.80]
 
-  receive_message()
+  receive_image()
 
   # data = cv2.imread('/home/manos/Desktop/obstacles.png')
   # while not rospy.is_shutdown():
-  #   callback(data)
+  #   on_image_received(data)
   #   #-- press q to quit
   #   if cv2.waitKey(1) & 0xFF == ord('q'):
   #       break
