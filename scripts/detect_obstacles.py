@@ -254,14 +254,10 @@ if __name__=="__main__":
 
     obstacles_map, rows, cols = obstacle_detector.generate_map(cv_image, window)
 
-    # costmap as 1-D array representation
-    costmap = tuple(obstacles_map)
     start_index = (2,6)#50
     goal_index = (4,0)#4
-    # side of each grid map square in meters
-    resolution = 0.2
     
-    shortest_path = path_planning.find_shortest_path(costmap, start_index, goal_index)
+    shortest_path = path_planning.find_shortest_path(obstacles_map, start_index, goal_index)
     print(shortest_path)
     while not rospy.is_shutdown():
         obstacle_detector.draw_map(cv_image, obstacles_map, window, shortest_path=shortest_path, start_index=start_index, goal_index=goal_index, imshow=True)
