@@ -10,6 +10,7 @@ from cv_bridge import CvBridge # Package to convert between ROS and OpenCV Image
 import cv2 # OpenCV library
 import numpy as np
 from utils import ARUCO_DICT, aruco_display, get_calibration_data
+from detect_obstacles import BlobTracker
 
 
 # Calibration Data
@@ -28,6 +29,7 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
     frame - The frame with the axis drawn on it
     '''
 
+    frame = frame.copy()
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     cv2.aruco_dict = cv2.aruco.Dictionary_get(aruco_dict_type)
     parameters = cv2.aruco.DetectorParameters_create()
@@ -67,14 +69,15 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
 
 def callback(data):
   # Used to convert between ROS and OpenCV images
-  # br = CvBridge()
+  br = CvBridge()
  
   # Output debugging information to the terminal
   # rospy.loginfo("receiving video frame")
    
   # Convert ROS Image message to OpenCV image
-  # current_frame = br.imgmsg_to_cv2(data)
-  current_frame = np.frombuffer(data.data, dtype=np.uint8).reshape(data.shape[0], data.shape[1], -1)
+  current_frame = br.imgmsg_to_cv2(data, 'bgr8')
+  # current_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2RGB)
+  # current_frame = np.frombuffer(data.data, dtype=np.uint8).reshape(data.shape[0], data.shape[1], -1)
   
   h,  w = current_frame.shape[:2]
   newcameramtx, roi = cv2.getOptimalNewCameraMatrix(CAMERA_MATRIX, DISTORTION_COEF, (WIDTH,HEIGHT), 1, (WIDTH,HEIGHT))
@@ -93,12 +96,15 @@ def callback(data):
   output = pose_esitmation(undistort_frame, aruco_dict_type, CAMERA_MATRIX, DISTORTION_COEF)
 
   cv2.imshow('Estimated Pose', output)
+
+  obstacles_map = blob_detector_object.generate_map(undistort_frame, window)
+  blob_detector_object.detect_blobs(undistort_frame, window, obstacles_map)
+
   cv2.waitKey(1)
       
 def receive_message():   
   # Node is subscribing to the video_frames topic
   camera = rospy.get_param('camera')
-  print(camera)
   rospy.Subscriber(camera, Image, callback)
  
   # spin() simply keeps python from exiting until this node is stopped
@@ -119,10 +125,22 @@ if __name__ == '__main__':
   current_pub = rospy.Publisher('current_position', Pose_estimation_vectors, queue_size=10)
   target_pub = rospy.Publisher('target_position', Pose_estimation_vectors, queue_size=10)
 
-  # receive_message()
+  # HSV limits for RED Haro
+  hsv_min = (0, 100, 0)
+  hsv_max = (5, 255, 255)  
+  
+  blob_detector_object = BlobTracker(hsv_min, hsv_max)
+  
+  # We define the detection area [x_min, y_min, x_max, y_max] adimensional (0.0 to 1.0) starting from top left corner
+  window = [0.13, 0.05, 0.96, 0.80]
 
-  data = cv2.imread('/home/manos/Desktop/obstacles.png')
-  while not rospy.is_shutdown():
-    callback(data)
+  receive_message()
+
+  # data = cv2.imread('/home/manos/Desktop/obstacles.png')
+  # while not rospy.is_shutdown():
+  #   callback(data)
+  #   #-- press q to quit
+  #   if cv2.waitKey(1) & 0xFF == ord('q'):
+  #       break
 
   

@@ -10,12 +10,14 @@ from geometry_msgs.msg import Point
 
 class BlobTracker(object):
 
-    def __init__(self):
+    def __init__(self, hsv_min, hsv_max):
         self.point_blob_topic = "/blob/point_blob"
         # This publisher  uses Point message to publish
         # x,y: x,y relative poses of the center of the blob detected relative to the center of teh image
         # z: size of the blob detected
         self.pub_blob = rospy.Publisher(self.point_blob_topic,  Point, queue_size=1)
+        self.hsv_min = hsv_min
+        self.hsv_max = hsv_max
 
 
     def blob_detect(self,
@@ -343,81 +345,72 @@ class BlobTracker(object):
         rows = window_image.shape[0]
         cols = window_image.shape[1]
         offset = 50
-
+        
         for row in range(0, rows-offset, offset):
             for col in range(0, cols-offset, offset):
                 box = window_image[col:col+offset, row:row+offset]
-                obstacles_map.append(self.is_image_contain_obstacles(box))
+                is_obstacle = self.does_image_contain_obstacles(box)
+                obstacles_map.append(is_obstacle) 
                 
         # cv2.imshow('box r:'+str(row)+' c:'+str(col), box)
         return obstacles_map
 
-    def is_image_contain_obstacles(self, image):
-        lower = np.array([0,0,245]) # b,g,r values
-        upper = np.array([20,20,255]) # b,g,r values
+    def does_image_contain_obstacles(self, image):
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        lower = self.hsv_min#np.array([0,0,245]) # b,g,r values
+        upper = self.hsv_max#np.array([20,20,255]) # b,g,r values
 
         mask = cv2.inRange(image, lower, upper)
         output = cv2.bitwise_and(image, image, mask = mask)
 
-        for i in range(image.shape[0]):
-            for k in range(image.shape[1]):
-                if output[k][i].any() == 1: 
-                    return True
-        return False
+        return True if 255 in output else False
 
-    def update_map(self, image, obstacles_map, x, y, size):
-        rows = image.shape[0]
-        cols = image.shape[1] 
 
-        box = image[y-size:y+size, x-size:x+size]
-        cv2.imshow('box x:'+str(x)+' y:'+str(y), box)
+    def detect_blobs(self, image, window, obstacles_map):
+        # Detect blobs
+        keypoints, _ = self.blob_detect(image, self.hsv_min, self.hsv_max, blur=3, 
+                                    blob_params=None, search_window=window, imshow=False)
 
-        return obstacles_map
+
+        for keypoint in keypoints:
+            x , y, size = self.get_blob_absolute_position(image, keypoint)
+
+            # x , y, size = blob_detector_object.get_blob_relative_position(cv_image, keypoint)
+            # blob_detector_object.publish_blob(x,y,size)
+            
+            # Draw Detection
+            self.draw_keypoints(image, (x,y,size), imshow=False)
+            
+
+        # Draw window where we make detections
+        image = self.draw_window(image, window, imshow=False)
+        # blob_detector_object.draw_frame(cv_image)
+        
+        self.draw_map(image, obstacles_map, window, imshow=True)
+        
+        # blob_detector_object.draw_keypoints(cv_image, keypoints, imshow=True)
+
         
 if __name__=="__main__":
 
     rospy.init_node("blob_detector_node", log_level=rospy.DEBUG)
-    cv_image = cv2.imread('/home/manos/Desktop/obstacles.png') # mira_sensors_obj.get_image()
+    cv_image = cv2.imread('/home/manos/Desktop/bright_obstacles.png') # mira_sensors_obj.get_image()
 
-    blob_detector_object = BlobTracker()
 
     # HSV limits for RED Haro
-    hsv_min = (0,234,0)
-    hsv_max = (0, 255, 255) 
-    
+    hsv_min = (0, 100, 0)
+    hsv_max = (5, 255, 255) 
+
     # We define the detection area [x_min, y_min, x_max, y_max] adimensional (0.0 to 1.0) starting from top left corner
     window = [0.1, 0.07, 0.73, 0.91]
+
+    blob_detector_object = BlobTracker(hsv_min, hsv_max)
 
     obstacles_map = blob_detector_object.generate_map(cv_image, window)
     while not rospy.is_shutdown():
         # Get most recent Image
         # cv_image = mira_sensors_obj.get_image()
-        
-        # Detect blobs
-        keypoints, _ = blob_detector_object.blob_detect(cv_image, hsv_min, hsv_max, blur=3, 
-                                    blob_params=None, search_window=window, imshow=False)
-
-
-        for keypoint in keypoints:
-            x , y, size = blob_detector_object.get_blob_absolute_position(cv_image, keypoint)
-
-            # x , y, size = blob_detector_object.get_blob_relative_position(cv_image, keypoint)
-            # blob_detector_object.publish_blob(x,y,size)
-
-            # obstacles_map = blob_detector_object.update_map(cv_image, obstacles_map, x, y, size)
-            
-            # Draw Detection
-            blob_detector_object.draw_keypoints(cv_image, (x,y,size), imshow=False)
-            
-
-        # Draw window where we make detections
-        cv_image = blob_detector_object.draw_window(cv_image, window, imshow=False)
-        # blob_detector_object.draw_frame(cv_image)
-        
-        blob_detector_object.draw_map(cv_image, obstacles_map, window, imshow=True)
-        
-        # blob_detector_object.draw_keypoints(cv_image, keypoints, imshow=True)
-
+        blob_detector_object.detect_blobs(cv_image, window, obstacles_map)
 
         #-- press q to quit
         if cv2.waitKey(1) & 0xFF == ord('q'):
