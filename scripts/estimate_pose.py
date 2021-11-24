@@ -11,6 +11,7 @@ import cv2 # OpenCV library
 import numpy as np
 from utils import ARUCO_DICT, aruco_display, get_calibration_data
 from detect_obstacles import ObstacleTracker
+import path_planning
 
 
 # Calibration Data
@@ -100,8 +101,23 @@ def on_image_received(data):
 
   cv2.imshow('Estimated Pose', output)
 
-  obstacles_map = obstacle_detector.generate_map(undistort_frame, window)
-  obstacle_detector.draw_map(output, obstacles_map, window, imshow=True)
+  obstacles_map, rows, cols = obstacle_detector.generate_map(undistort_frame, window)
+
+  # costmap as 1-D array representation
+  costmap = tuple(obstacles_map)
+  # number of columns in the occupancy grid
+  width = rows
+  # number of rows in the occupancy grid
+  height = cols
+  start_index = 32
+  goal_index = 5
+  # side of each grid map square in meters
+  resolution = 0.2
+
+  shortest_path = path_planning.dijkstra(start_index, goal_index, rows, cols, costmap, resolution)
+  print(shortest_path)
+
+  # obstacle_detector.draw_map(output, obstacles_map, window, shortest_path, imshow=True)
 
   cv2.waitKey(1)
       
