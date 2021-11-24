@@ -78,7 +78,8 @@ class Controller:
         k_beta = -0.15
         constant_vel = 0.3
 
-        while rho>0.05:
+        while rho>0.05 and not rospy.is_shutdown():
+
             if self.theta_target is None:
                 continue
             # thetag = math.radians(self.theta_target)
