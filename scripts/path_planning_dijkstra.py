@@ -178,19 +178,20 @@ if __name__=="__main__":
 
   # costmap as 1-D array representation
   costmap = (0, 0, 0, 0, 0, 0, 0, 0, 
-   0, 0, 0, 0, 0, 0, 0, 0, 
-   0, 0, 0, 0, 0, 1, 1, 0, 
-   0, 0, 1, 1, 0, 1, 1, 0, 
-   0, 0, 1, 1, 0, 0, 0, 0, 
-   0, 0, 0, 0, 0, 0, 0, 0, 
-   0, 0, 0, 0, 0, 0, 0, 0, 
-   0, 0, 0, 0, 0, 0, 0, 0)
+              0, 0, 0, 0, 0, 0, 0, 0, 
+              0, 0, 0, 0, 0, 1, 1, 0, 
+              0, 0, 1, 1, 0, 1, 1, 0, 
+              0, 0, 1, 1, 0, 0, 0, 0, 
+              0, 0, 0, 0, 0, 0, 0, 0, 
+              0, 0, 0, 0, 0, 0, 0, 0, 
+              0, 0, 0, 0, 0, 0, 0, 0)
+
   # number of columns in the occupancy grid
   width = 7
   # number of rows in the occupancy grid
   height = 7
-  start_index = 50
-  goal_index = 4
+  start_index = 2
+  goal_index = 45
   # side of each grid map square in meters
   resolution = 0.2
 

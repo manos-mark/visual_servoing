@@ -101,7 +101,7 @@ def find_shortest_path(maze, start, end):
   return path
 
 if __name__ == '__main__':
-  maze = [[0, 0, 0, 0, 0, 0, 0, 0,],
+  maze =   [[0, 0, 0, 0, 0, 0, 0, 0,],
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 1, 1, 0],
             [0, 0, 1, 1, 0, 1, 1, 0],
