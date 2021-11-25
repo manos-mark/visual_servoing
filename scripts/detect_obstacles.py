@@ -60,8 +60,10 @@ class ObstacleTracker(object):
                     is_obstacle = obstacles_map[j][i]
                     text = 'X' if is_obstacle else 'O' 
                     color = (255,255,0) if is_obstacle else (255,0,0)
-                    center = (int(row+offset/4), int(col-offset/4))
-                    shortest_path_pixels.append(center)
+                    
+                    # center = (int(row+offset/4), int(col-offset/4))
+                    from utils import convert_corners_to_center
+                    center = (row+4, col-16)
 
                     image = cv2.putText(image, text, center, cv2.FONT_HERSHEY_SIMPLEX, 
                         1, color, 3, cv2.LINE_AA)
@@ -94,6 +96,7 @@ class ObstacleTracker(object):
                 if shortest_path is not None:
                     if (j,i) in shortest_path:
                         cv2.circle(image, center, radius, color, thickness)
+                        shortest_path_pixels.append(center)
 
         if imshow:
             # Show keypoints

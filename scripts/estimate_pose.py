@@ -66,11 +66,12 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
           current_pub.publish(message) 
           # get the center of the position by converting the four corners        
           cur_pos_center = convert_corners_to_center(corners[0])
+          print(cur_pos_center) 
 
         elif id[0] == 1:
           # target_pub.publish(message)
           # get the center of the position by converting the four corners
-          target_pos_center = convert_corners_to_center(corners[1])           
+          target_pos_center = convert_corners_to_center(corners[1])          
 
     return frame, cur_pos_center, target_pos_center
 
@@ -107,23 +108,28 @@ def on_image_received(data):
 
   cv2.imshow('Estimated Pose', image_with_pose)
   cv2.waitKey(1)
-
+  
   if (cur_pos_center is not None) and (goal_pos_center is not None):
+    
     obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes = obstacle_detector.generate_map(undistort_frame, window, cur_pos_center, goal_pos_center)
     
     shortest_path = path_planning.find_shortest_path(obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes)
-
+    
     _, shortest_path_pixels = obstacle_detector.draw_map(image_with_pose, obstacles_map, window, shortest_path, cur_pos_center_indexes, goal_pos_center_indexes, imshow=True)
-
+    
+    shortest_path_pixels.reverse()
     for i, step_center in enumerate(shortest_path_pixels):
+      if i == 0:
+        print(step_center)
       top_left = np.array([step_center[0]-15,step_center[1]-15], dtype=np.float)
       bt_left = np.array([step_center[0]-15,step_center[1]+15], dtype=np.float)
       top_right = np.array([step_center[0]+15,step_center[1]-15], dtype=np.float)
       bt_right = np.array([step_center[0]+15,step_center[1]+15], dtype=np.float)
-
+      corners = np.array([[top_left, bt_right, top_right, bt_right]])
+      
       if i != 0:
         rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(
-          np.array([[top_left, bt_right, top_right, bt_right]]), 
+          corners, 
           0.15, 
           CAMERA_MATRIX, 
           DISTORTION_COEF
