@@ -4,6 +4,8 @@ import numpy as np
 
 
 def convert_corners_to_center(corners):
+	if corners is None:
+		return None
 	corners = corners.reshape((4, 2)) 
 	(topLeft, topRight, bottomRight, bottomLeft) = corners
 	# convert each of the (x, y)-coordinate pairs to integers

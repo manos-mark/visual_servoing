@@ -41,8 +41,8 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
         distCoeff=distortion_coefficients)
     #  The output of the ids is [[0],[1]] (tw0 markers)
     # If markers are detected
+    cur_pos_center = target_pos_center = None
     if len(corners) > 0:
-      cur_pos_center = target_pos_center = None
 
       for index, id in enumerate(ids):
         rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(
@@ -68,7 +68,7 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
           cur_pos_center = convert_corners_to_center(corners[0])
 
         elif id[0] == 1:
-          target_pub.publish(message)
+          # target_pub.publish(message)
           # get the center of the position by converting the four corners
           target_pos_center = convert_corners_to_center(corners[1])           
 
@@ -106,18 +106,35 @@ def on_image_received(data):
   image_with_pose, cur_pos_center, goal_pos_center = pose_esitmation(undistort_frame, aruco_dict_type, CAMERA_MATRIX, DISTORTION_COEF)
 
   cv2.imshow('Estimated Pose', image_with_pose)
+  cv2.waitKey(1)
 
   if (cur_pos_center is not None) and (goal_pos_center is not None):
     obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes = obstacle_detector.generate_map(undistort_frame, window, cur_pos_center, goal_pos_center)
-
-    # start_index = (2,6)#50
-    # goal_index = (4,0)#4
-
+    
     shortest_path = path_planning.find_shortest_path(obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes)
 
-    obstacle_detector.draw_map(image_with_pose, obstacles_map, window, shortest_path, cur_pos_center_indexes, goal_pos_center_indexes, imshow=True)
+    _, shortest_path_pixels = obstacle_detector.draw_map(image_with_pose, obstacles_map, window, shortest_path, cur_pos_center_indexes, goal_pos_center_indexes, imshow=True)
 
-    cv2.waitKey(1)
+    for i, step_center in enumerate(shortest_path_pixels):
+      top_left = np.array([step_center[0]-15,step_center[1]-15], dtype=np.float)
+      bt_left = np.array([step_center[0]-15,step_center[1]+15], dtype=np.float)
+      top_right = np.array([step_center[0]+15,step_center[1]-15], dtype=np.float)
+      bt_right = np.array([step_center[0]+15,step_center[1]+15], dtype=np.float)
+
+      if i != 0:
+        rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(
+          np.array([[top_left, bt_right, top_right, bt_right]]), 
+          0.15, 
+          CAMERA_MATRIX, 
+          DISTORTION_COEF
+        )
+
+        message = Pose_estimation_vectors()
+        message.rotational.x, message.rotational.y, message.rotational.z  = rvec[0][0][0], rvec[0][0][1], rvec[0][0][2]
+        message.translational.x, message.translational.y, message.translational.z = tvec[0][0][0], tvec[0][0][1], tvec[0][0][2]
+        target_pub.publish(message)
+
+  
       
 def receive_image():   
   # Node is subscribing to the video_frames topic
@@ -151,13 +168,13 @@ if __name__ == '__main__':
   # We define the detection area [x_min, y_min, x_max, y_max] adimensional (0.0 to 1.0) starting from top left corner
   window = [0.13, 0.05, 0.96, 0.80]
 
-  # receive_image()
+  receive_image()
 
-  data = cv2.imread('/home/manos/Desktop/obstacles.png')
-  while not rospy.is_shutdown():
-    on_image_received(data)
-    #-- press q to quit
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+  # data = cv2.imread('/home/manos/Desktop/obstacles.png')
+  # while not rospy.is_shutdown():
+  #   on_image_received(data)
+  #   #-- press q to quit
+  #   if cv2.waitKey(1) & 0xFF == ord('q'):
+  #       break
 
   

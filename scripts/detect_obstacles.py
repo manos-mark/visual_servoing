@@ -44,6 +44,8 @@ class ObstacleTracker(object):
         image = cv2.rectangle(image,(x_min_px,y_min_px),(x_max_px,y_max_px),color,line)
         
         offset = 50
+
+        shortest_path_pixels = []
         
         for row in range(y_min_px, y_max_px, offset):
             image = cv2.line(image, (x_min_px, row), (x_max_px, row), (100,0,0), line)
@@ -59,7 +61,8 @@ class ObstacleTracker(object):
                     text = 'X' if is_obstacle else 'O' 
                     color = (255,255,0) if is_obstacle else (255,0,0)
                     center = (int(row+offset/4), int(col-offset/4))
-                    
+                    shortest_path_pixels.append(center)
+
                     image = cv2.putText(image, text, center, cv2.FONT_HERSHEY_SIMPLEX, 
                         1, color, 3, cv2.LINE_AA)
 
@@ -96,7 +99,7 @@ class ObstacleTracker(object):
             # Show keypoints
             cv2.imshow("Map", image)
 
-        return(image)
+        return(image), shortest_path_pixels
 
     def draw_window(self,
                     image,              #- Input image
