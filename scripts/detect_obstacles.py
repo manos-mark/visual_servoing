@@ -63,11 +63,11 @@ class ObstacleTracker(object):
                     image = cv2.putText(image, text, center, cv2.FONT_HERSHEY_SIMPLEX, 
                         1, color, 3, cv2.LINE_AA)
 
-                    pos = self.get_relative_position(image, (row,col))
-                    pos = '(%0.1f,%0.1f)' % (pos[0]*10, pos[1]*10)
+                    # pos = self.get_relative_position(image, (row,col))
+                    # pos = '(%0.1f,%0.1f)' % (pos[0]*10, pos[1]*10)
                     
-                    image = cv2.putText(image, pos, (row, col), cv2.FONT_HERSHEY_SIMPLEX, 
-                        0.3, color, 1, cv2.LINE_AA)
+                    # image = cv2.putText(image, pos, (row, col), cv2.FONT_HERSHEY_SIMPLEX, 
+                    #     0.3, color, 1, cv2.LINE_AA)
 
                     if start_index is not None:
                         if (j,i) == start_index:
@@ -91,37 +91,6 @@ class ObstacleTracker(object):
                 if shortest_path is not None:
                     if (j,i) in shortest_path:
                         cv2.circle(image, center, radius, color, thickness)
-
-
-        # i = 0
-        # for col in range(y_min_px+offset, y_max_px, offset):
-        #     for row in range(x_min_px, x_max_px-offset, offset):
-
-        #         if start_index is not None:
-        #             if i == start_index:
-        #                     color = (255, 255, 255)
-        #                     cv2.putText(image, 'S', (row,col), cv2.FONT_HERSHEY_SIMPLEX, 
-        #                         1, color, 5, cv2.LINE_AA)
-                        
-        #         if goal_index is not None:
-        #             if i == goal_index:
-        #                 color = (0, 255, 255)
-        #                 cv2.putText(image, 'G', (row,col), cv2.FONT_HERSHEY_SIMPLEX, 
-        #                     1, color, 5, cv2.LINE_AA)
-            
-        #         #Radius of circle
-        #         radius = 6
-        #         # Orange color in BGR
-        #         color = (0, 140, 255)
-        #         # Line thickness of 2 px
-        #         thickness = -1
-
-        #         if shortest_path is not None:
-        #             if i in shortest_path:
-        #                 center_coordinates = (row,col)
-        #                 cv2.circle(image, center_coordinates, radius, color, thickness)
-        #         i += 1
-
 
         if imshow:
             # Show keypoints
@@ -228,13 +197,13 @@ class ObstacleTracker(object):
                     x = cur_pos_center[0]
                     y = cur_pos_center[1]
                     if (col <= x) and (x <= col+offset) and (row <= y) and (y <= row+offset+offset):
-                        cur_pos_center_indexes = (j,i)
+                        cur_pos_center_indexes = (j-1,i)
 
                 if goal_pos_center is not None:
                     x = goal_pos_center[0]
                     y = goal_pos_center[1]
                     if (col <= x) and (x <= col+offset) and (row <= y) and (y <= row+offset+offset):
-                        goal_pos_center_indexes = (j,i)
+                        goal_pos_center_indexes = (j-1,i-1)
 
             obstacles_map.append(row_list)
             

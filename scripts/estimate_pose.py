@@ -42,6 +42,8 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
     #  The output of the ids is [[0],[1]] (tw0 markers)
     # If markers are detected
     if len(corners) > 0:
+      cur_pos_center = target_pos_center = None
+
       for index, id in enumerate(ids):
         rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(
           corners[index], 
@@ -61,13 +63,16 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
         
         # if the id[0] is the current position
         if id[0] == 0: 
-          current_pub.publish(message)         
+          current_pub.publish(message) 
+          # get the center of the position by converting the four corners        
           cur_pos_center = convert_corners_to_center(corners[0])
-          return frame, cur_pos_center, None
+
         elif id[0] == 1:
           target_pub.publish(message)
+          # get the center of the position by converting the four corners
           target_pos_center = convert_corners_to_center(corners[1])           
-          return frame, None, target_pos_center
+
+    return frame, cur_pos_center, target_pos_center
 
 def on_image_received(data):
   # Used to convert between ROS and OpenCV images
@@ -102,19 +107,17 @@ def on_image_received(data):
 
   cv2.imshow('Estimated Pose', image_with_pose)
 
-  if cur_pos_center or goal_pos_center:
-    return
-  obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes = obstacle_detector.generate_map(undistort_frame, window, cur_pos_center, goal_pos_center)
+  if (cur_pos_center is not None) and (goal_pos_center is not None):
+    obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes = obstacle_detector.generate_map(undistort_frame, window, cur_pos_center, goal_pos_center)
 
-  # start_index = (2,6)#50
-  # goal_index = (4,0)#4
+    # start_index = (2,6)#50
+    # goal_index = (4,0)#4
 
-  shortest_path = path_planning.find_shortest_path(obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes)
-  # print(shortest_path)
+    shortest_path = path_planning.find_shortest_path(obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes)
 
-  obstacle_detector.draw_map(image_with_pose, obstacles_map, window, shortest_path, start_index, goal_index, imshow=True)
+    obstacle_detector.draw_map(image_with_pose, obstacles_map, window, shortest_path, cur_pos_center_indexes, goal_pos_center_indexes, imshow=True)
 
-  cv2.waitKey(1)
+    cv2.waitKey(1)
       
 def receive_image():   
   # Node is subscribing to the video_frames topic
