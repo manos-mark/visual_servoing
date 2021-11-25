@@ -110,8 +110,8 @@ if __name__ == '__main__':
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]]
 
-  start = (5, 0)
-  end = (3, 7)
+  start = (2,6)#50
+  end = (4,0)#4
 
   path = find_shortest_path(maze, start, end)
   print(path)

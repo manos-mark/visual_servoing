@@ -55,13 +55,19 @@ class ObstacleTracker(object):
             for (j, row) in enumerate(range(x_min_px, x_max_px-offset, offset)):
                 
                 if obstacles_map is not None:
-                    is_obstacle = obstacles_map[i][j]
+                    is_obstacle = obstacles_map[j][i]
                     text = 'X' if is_obstacle else 'O' 
                     color = (255,255,0) if is_obstacle else (255,0,0)
                     center = (int(row+offset/4), int(col-offset/4))
                     
                     image = cv2.putText(image, text, center, cv2.FONT_HERSHEY_SIMPLEX, 
                         1, color, 3, cv2.LINE_AA)
+
+                    pos = self.get_relative_position(image, (row,col))
+                    pos = '(%0.1f,%0.1f)' % (pos[0]*10, pos[1]*10)
+                    
+                    image = cv2.putText(image, pos, (row, col), cv2.FONT_HERSHEY_SIMPLEX, 
+                        0.3, color, 1, cv2.LINE_AA)
 
                     if start_index is not None:
                         if (j,i) == start_index:
@@ -152,7 +158,7 @@ class ObstacleTracker(object):
 
         return(image)
 
-    def get_obstacle_relative_position(self, image, keyPoint):
+    def get_relative_position(self, image, keyPoint):
         """
         Obtain the camera relative frame coordinate of one single keypoint
         return(x,y)
@@ -163,18 +169,18 @@ class ObstacleTracker(object):
         center_x    = 0.5*cols
         center_y    = 0.5*rows
 
-        x = (keyPoint.pt[0] - center_x)/(center_x)
-        y = (keyPoint.pt[1] - center_y)/(center_y)
+        x = (keyPoint[0] - center_x)/(center_x)
+        y = (keyPoint[1] - center_y)/(center_y)
         
-        return x,y
+        return y,x
 
-    def get_obstacle_absolute_position(self, image, keyPoint):
+    def get_absolute_position(self, image, keyPoint):
         """
         Obtain the camera relative frame coordinate of one single keypoint
         return(x,y)
         """
-        x = int(keyPoint.pt[0])
-        y = int(keyPoint.pt[1])
+        x = int(keyPoint[0])
+        y = int(keyPoint[1])
         size = int((keyPoint.size/2))
         
         return x, y, size
@@ -187,7 +193,7 @@ class ObstacleTracker(object):
 
     #     self.pub_blob.publish(blob_point)
     
-    def generate_map(self, image, window_adim):
+    def generate_map(self, image, window_adim, cur_pos_center, goal_pos_center):
         rows = image.shape[0]
         cols = image.shape[1]
 
@@ -197,34 +203,48 @@ class ObstacleTracker(object):
         x_min_px    = int(cols*window_adim[0])
         y_min_px    = int(rows*window_adim[1])
         x_max_px    = int(cols*window_adim[2])
-        y_max_px    = int(rows*window_adim[3])  
+        y_max_px    = int(rows*window_adim[3]) 
         
         window_image = image[y_min_px:y_max_px, x_min_px:x_max_px]
 
         rows = window_image.shape[0]
         cols = window_image.shape[1]
+
+        cur_pos_center_indexes = goal_pos_center_indexes = None
+
+        # Robot size - should be equal with the box size
         offset = 50
         
-        rows_count = 0
-        for row in range(0, rows-offset, offset):
-            rows_count += 1
-            cols_count = 0
+        for (i, row) in enumerate(range(0, rows-offset, offset)):
             row_list = []
 
-            for col in range(0, cols-offset, offset):
-                cols_count += 1
+            for (j, col) in enumerate(range(0, cols-offset, offset)):
                 box = window_image[col:col+offset, row:row+offset]
                 is_obstacle = self.does_image_contain_obstacles(box)
                 # obstacles_map.append(255 if is_obstacle else 0) 
                 row_list.append(1 if is_obstacle else 0)
+                
+                if cur_pos_center is not None:
+                    x = cur_pos_center[0]
+                    y = cur_pos_center[1]
+                    if (col <= x) and (x <= col+offset) and (row <= y) and (y <= row+offset+offset):
+                        cur_pos_center_indexes = (j,i)
+
+                if goal_pos_center is not None:
+                    x = goal_pos_center[0]
+                    y = goal_pos_center[1]
+                    if (col <= x) and (x <= col+offset) and (row <= y) and (y <= row+offset+offset):
+                        goal_pos_center_indexes = (j,i)
+
             obstacles_map.append(row_list)
             
             # cv2.imshow('box r:'+str(row)+' c:'+str(col), box)
         
-        obstacles_map = np.array(obstacles_map).T
+        # obstacles_map = np.array(obstacles_map).T
         # obstacles_map = obstacles_map.flatten().squeeze()
-        print(obstacles_map)
-        return obstacles_map, rows_count-1, cols_count-1
+        # for ob in obstacles_map:
+        #     print(ob)
+        return obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes
 
     def does_image_contain_obstacles(self, image):
         image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -254,11 +274,14 @@ if __name__=="__main__":
 
     obstacles_map, rows, cols = obstacle_detector.generate_map(cv_image, window)
 
-    start_index = (2,6)#50
-    goal_index = (4,0)#4
+    start_index = (4,6)#50
+    goal_index = (0,0)#4
     
     shortest_path = path_planning.find_shortest_path(obstacles_map, start_index, goal_index)
-    print(shortest_path)
+    # shortest_path = np.array(shortest_path).T
+    # for pos in shortest_path:
+    #     print(obstacle_detector.get_relative_position(cv_image, pos))
+    
     while not rospy.is_shutdown():
         obstacle_detector.draw_map(cv_image, obstacles_map, window, shortest_path=shortest_path, start_index=start_index, goal_index=goal_index, imshow=True)
 

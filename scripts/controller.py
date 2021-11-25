@@ -105,7 +105,7 @@ class Controller:
             
             v = k_rho * rho
             w = k_alpha * alpha + k_beta * beta
-            print(f'\ntheta: {math.degrees(theta)}, rho: {rho}. alpha: {math.degrees(alpha)} beta: {math.degrees(beta)}')
+            # print(f'\ntheta: {math.degrees(theta)}, rho: {rho}. alpha: {math.degrees(alpha)} beta: {math.degrees(beta)}')
 
             if constant_vel:
                 abs_v = abs(v)
@@ -152,7 +152,7 @@ class Controller:
 
             v = 0
             w = k_beta * beta
-            print('beta: ',beta, '\tdx: ',dx, '\tdy: ',dy)
+            # print('beta: ',beta, '\tdx: ',dx, '\tdy: ',dy)
             # print('w: ',w)
             self.send_velocity_to_robot(v,w)
 
@@ -203,7 +203,7 @@ class Controller:
 
             # Publish zero velocities when the distance to target is less than the distance error
             # print(f'\ntheta: {math.degrees(theta)}, rho: {rho}. alpha: {math.degrees(alpha)} beta: {math.degrees(beta)}')
-            print(f' rho: {rho}')
+            # print(f' rho: {rho}')
             
             v = k_rho * rho                
             w = 0

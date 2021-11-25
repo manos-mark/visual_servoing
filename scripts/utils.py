@@ -3,6 +3,19 @@ import yaml
 import numpy as np
 
 
+def convert_corners_to_center(corners):
+	corners = corners.reshape((4, 2)) 
+	(topLeft, topRight, bottomRight, bottomLeft) = corners
+	# convert each of the (x, y)-coordinate pairs to integers
+	topRight = (int(topRight[0]), int(topRight[1]))
+	bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
+	bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
+	topLeft = (int(topLeft[0]), int(topLeft[1]))
+
+	cX = int((topLeft[0] + bottomRight[0]) / 2.0)
+	cY = int((topLeft[1] + bottomRight[1]) / 2.0)
+	return (cX, cY)
+
 def get_calibration_data(calibration_file):
 	with open(calibration_file, "r") as data:
 		try:

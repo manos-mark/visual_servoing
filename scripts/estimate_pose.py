@@ -9,7 +9,7 @@ from visual_servoing.msg import Pose_estimation_vectors
 from cv_bridge import CvBridge # Package to convert between ROS and OpenCV Images
 import cv2 # OpenCV library
 import numpy as np
-from utils import ARUCO_DICT, aruco_display, get_calibration_data
+from utils import ARUCO_DICT, aruco_display, get_calibration_data, convert_corners_to_center
 from detect_obstacles import ObstacleTracker
 import path_planning
 
@@ -61,12 +61,13 @@ def pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
         
         # if the id[0] is the current position
         if id[0] == 0: 
-          current_pub.publish(message)
+          current_pub.publish(message)         
+          cur_pos_center = convert_corners_to_center(corners[0])
+          return frame, cur_pos_center, None
         elif id[0] == 1:
           target_pub.publish(message)
-
-            
-    return frame
+          target_pos_center = convert_corners_to_center(corners[1])           
+          return frame, None, target_pos_center
 
 def on_image_received(data):
   # Used to convert between ROS and OpenCV images
@@ -97,27 +98,21 @@ def on_image_received(data):
   # aruco_dict_type = cv2.aruco.DICT_4X4_100
   aruco_dict_type = cv2.aruco.DICT_ARUCO_ORIGINAL #cv2.aruco['DICT_4X4_100']
 
-  output = pose_esitmation(undistort_frame, aruco_dict_type, CAMERA_MATRIX, DISTORTION_COEF)
+  image_with_pose, cur_pos_center, goal_pos_center = pose_esitmation(undistort_frame, aruco_dict_type, CAMERA_MATRIX, DISTORTION_COEF)
 
-  cv2.imshow('Estimated Pose', output)
+  cv2.imshow('Estimated Pose', image_with_pose)
 
-  obstacles_map, rows, cols = obstacle_detector.generate_map(undistort_frame, window)
+  if cur_pos_center or goal_pos_center:
+    return
+  obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes = obstacle_detector.generate_map(undistort_frame, window, cur_pos_center, goal_pos_center)
 
-  # costmap as 1-D array representation
-  costmap = tuple(obstacles_map)
-  # number of columns in the occupancy grid
-  width = rows
-  # number of rows in the occupancy grid
-  height = cols
-  start_index = 32
-  goal_index = 5
-  # side of each grid map square in meters
-  resolution = 0.2
+  # start_index = (2,6)#50
+  # goal_index = (4,0)#4
 
-  shortest_path = path_planning.dijkstra(start_index, goal_index, rows, cols, costmap, resolution)
-  print(shortest_path)
+  shortest_path = path_planning.find_shortest_path(obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes)
+  # print(shortest_path)
 
-  # obstacle_detector.draw_map(output, obstacles_map, window, shortest_path, imshow=True)
+  obstacle_detector.draw_map(image_with_pose, obstacles_map, window, shortest_path, start_index, goal_index, imshow=True)
 
   cv2.waitKey(1)
       
@@ -153,13 +148,13 @@ if __name__ == '__main__':
   # We define the detection area [x_min, y_min, x_max, y_max] adimensional (0.0 to 1.0) starting from top left corner
   window = [0.13, 0.05, 0.96, 0.80]
 
-  receive_image()
+  # receive_image()
 
-  # data = cv2.imread('/home/manos/Desktop/obstacles.png')
-  # while not rospy.is_shutdown():
-  #   on_image_received(data)
-  #   #-- press q to quit
-  #   if cv2.waitKey(1) & 0xFF == ord('q'):
-  #       break
+  data = cv2.imread('/home/manos/Desktop/obstacles.png')
+  while not rospy.is_shutdown():
+    on_image_received(data)
+    #-- press q to quit
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
   
