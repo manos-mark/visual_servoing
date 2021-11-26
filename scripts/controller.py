@@ -114,7 +114,7 @@ class Controller:
 
             self.send_velocity_to_robot(v,w)
 
-            rospy.sleep(0.01)
+            # rospy.sleep(0.01)
 
         self.stop_robot()
 

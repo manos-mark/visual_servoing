@@ -11,9 +11,10 @@ import path_planning
 
 class ObstacleTracker(object):
 
-    def __init__(self, hsv_min, hsv_max):
+    def __init__(self, hsv_min, hsv_max, robot_size_in_pixels):
         self.hsv_min = hsv_min
         self.hsv_max = hsv_max
+        self.offset = robot_size_in_pixels
 
     def draw_map(self,
                     image,              #- Input image
@@ -30,7 +31,8 @@ class ObstacleTracker(object):
         Draw search window: returns the image
         return(image)
         """
-        
+        # rospy.loginfo('Drawing map started')
+
         image = image.copy()
         rows = image.shape[0]
         cols = image.shape[1]
@@ -43,9 +45,9 @@ class ObstacleTracker(object):
         #-- Draw a rectangle from top left to bottom right corner
         image = cv2.rectangle(image,(x_min_px,y_min_px),(x_max_px,y_max_px),color,line)
         
-        offset = 50
+        offset = self.offset
 
-        shortest_path_pixels = []
+        shortest_path_center_pixels = [0] * len(shortest_path) #np.zeros_like(shortest_path)
         
         for row in range(y_min_px, y_max_px, offset):
             image = cv2.line(image, (x_min_px, row), (x_max_px, row), (100,0,0), line)
@@ -61,9 +63,7 @@ class ObstacleTracker(object):
                     text = 'X' if is_obstacle else 'O' 
                     color = (255,255,0) if is_obstacle else (255,0,0)
                     
-                    # center = (int(row+offset/4), int(col-offset/4))
-                    from utils import convert_corners_to_center
-                    center = (row+4, col-16)
+                    center = (row+int(offset/2), col-int(offset/2))
 
                     image = cv2.putText(image, text, center, cv2.FONT_HERSHEY_SIMPLEX, 
                         1, color, 3, cv2.LINE_AA)
@@ -94,15 +94,16 @@ class ObstacleTracker(object):
                 thickness = -1
 
                 if shortest_path is not None:
-                    if (j,i) in shortest_path:
-                        cv2.circle(image, center, radius, color, thickness)
-                        shortest_path_pixels.append(center)
+                    for (index, value) in enumerate(shortest_path):
+                        if (j,i) == value:
+                            cv2.circle(image, center, radius, color, thickness)    
+                            shortest_path_center_pixels[index] = center
 
         if imshow:
             # Show keypoints
             cv2.imshow("Map", image)
-
-        return(image), shortest_path_pixels
+        # rospy.loginfo('Drawing map completed')
+        return(image), shortest_path_center_pixels
 
     def draw_window(self,
                     image,              #- Input image
@@ -169,6 +170,7 @@ class ObstacleTracker(object):
     #     self.pub_blob.publish(blob_point)
     
     def generate_map(self, image, window_adim, cur_pos_center, goal_pos_center):
+        rospy.loginfo('Detecting obstacles started')
         rows = image.shape[0]
         cols = image.shape[1]
 
@@ -219,6 +221,7 @@ class ObstacleTracker(object):
         # obstacles_map = obstacles_map.flatten().squeeze()
         # for ob in obstacles_map:
         #     print(ob)
+        rospy.loginfo('Detecting obstacles completed')
         return obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes
 
     def does_image_contain_obstacles(self, image):

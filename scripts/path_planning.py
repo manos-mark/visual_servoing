@@ -1,3 +1,5 @@
+import rospy
+
 class Node():
     """A node class for A* Pathfinding"""
 
@@ -97,8 +99,10 @@ def astar(maze, start, end):
 
 
 def find_shortest_path(maze, start, end):
+  rospy.loginfo('Finding shortest path started')
   path = astar(maze, start, end)
-  return path
+  rospy.loginfo('Finding shortest path completed')
+  return path 
 
 if __name__ == '__main__':
   maze =   [[0, 0, 0, 0, 0, 0, 0, 0,],

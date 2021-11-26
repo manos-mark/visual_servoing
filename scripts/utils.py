@@ -3,6 +3,16 @@ import yaml
 import numpy as np
 
 
+def convert_center_to_corners(center, offset):
+  top_left = np.array([center[0]-offset, center[1]-offset], dtype=np.float)
+  bt_left = np.array([center[0]-offset, center[1]+offset], dtype=np.float)
+  top_right = np.array([center[0]+offset, center[1]-offset], dtype=np.float)
+  bt_right = np.array([center[0]+offset, center[1]+offset], dtype=np.float)
+  corners = np.array([[top_left, bt_right, top_right, bt_right]])
+
+  return corners
+
+
 def convert_corners_to_center(corners):
 	if corners is None:
 		return None
