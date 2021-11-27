@@ -16,6 +16,41 @@ class ObstacleTracker(object):
         self.hsv_max = hsv_max
         self.offset = robot_size_in_pixels
 
+    def convert_center_to_pixels(self, image, window_adim, shortest_path):
+        if shortest_path is None:
+            return
+            
+        image = image.copy()
+        rows = image.shape[0]
+        cols = image.shape[1]
+        
+        if window_adim is not None:
+            x_min_px    = int(cols*window_adim[0])
+            y_min_px    = int(rows*window_adim[1])
+            x_max_px    = int(cols*window_adim[2])
+            y_max_px    = int(rows*window_adim[3]) 
+
+        else:
+            x_min_px    = 0
+            y_min_px    = 0
+            x_max_px    = int(cols)
+            y_max_px    = int(rows) 
+                
+        offset = self.offset
+
+        shortest_path_center_pixels = [0] * len(shortest_path) #np.zeros_like(shortest_path)
+
+        for (i, col) in enumerate(range(y_min_px+offset, y_max_px, offset)):
+            for (j, row) in enumerate(range(x_min_px, x_max_px-offset, offset)):
+                
+                center = (row+int(offset/2), col-int(offset/2))
+
+                for (index, value) in enumerate(shortest_path):
+                    if (j,i) == value:
+                        shortest_path_center_pixels[index] = center
+
+        return shortest_path_center_pixels
+
     def draw_map(self,
                     image,              #- Input image
                     obstacles_map,
@@ -37,17 +72,23 @@ class ObstacleTracker(object):
         rows = image.shape[0]
         cols = image.shape[1]
         
-        x_min_px    = int(cols*window_adim[0])
-        y_min_px    = int(rows*window_adim[1])
-        x_max_px    = int(cols*window_adim[2])
-        y_max_px    = int(rows*window_adim[3])  
-        
-        #-- Draw a rectangle from top left to bottom right corner
-        image = cv2.rectangle(image,(x_min_px,y_min_px),(x_max_px,y_max_px),color,line)
+        if window_adim is not None:
+            x_min_px    = int(cols*window_adim[0])
+            y_min_px    = int(rows*window_adim[1])
+            x_max_px    = int(cols*window_adim[2])
+            y_max_px    = int(rows*window_adim[3]) 
+
+        else:
+            x_min_px    = 0
+            y_min_px    = 0
+            x_max_px    = int(cols)
+            y_max_px    = int(rows) 
         
         offset = self.offset
-
-        shortest_path_center_pixels = [0] * len(shortest_path) #np.zeros_like(shortest_path)
+        #-- Draw a rectangle from top left to bottom right corner
+        image = cv2.rectangle(image,(x_min_px,y_min_px),(x_max_px,y_max_px),color,line)
+        image = image[y_min_px:y_max_px+offset, x_min_px:x_max_px+offset]
+        
         
         for row in range(y_min_px, y_max_px, offset):
             image = cv2.line(image, (x_min_px, row), (x_max_px, row), (100,0,0), line)
@@ -58,7 +99,7 @@ class ObstacleTracker(object):
         for (i, col) in enumerate(range(y_min_px+offset, y_max_px, offset)):
             for (j, row) in enumerate(range(x_min_px, x_max_px-offset, offset)):
                 
-                if obstacles_map is not None:
+                if obstacles_map is not None: # and i < len(obstacles_map)-1 and j < len(obstacles_map)-1:
                     is_obstacle = obstacles_map[j][i]
                     text = 'X' if is_obstacle else 'O' 
                     color = (255,255,0) if is_obstacle else (255,0,0)
@@ -67,12 +108,6 @@ class ObstacleTracker(object):
 
                     image = cv2.putText(image, text, center, cv2.FONT_HERSHEY_SIMPLEX, 
                         1, color, 3, cv2.LINE_AA)
-
-                    # pos = self.get_relative_position(image, (row,col))
-                    # pos = '(%0.1f,%0.1f)' % (pos[0]*10, pos[1]*10)
-                    
-                    # image = cv2.putText(image, pos, (row, col), cv2.FONT_HERSHEY_SIMPLEX, 
-                    #     0.3, color, 1, cv2.LINE_AA)
 
                     if start_index is not None:
                         if (j,i) == start_index:
@@ -97,13 +132,13 @@ class ObstacleTracker(object):
                     for (index, value) in enumerate(shortest_path):
                         if (j,i) == value:
                             cv2.circle(image, center, radius, color, thickness)    
-                            shortest_path_center_pixels[index] = center
+                            # shortest_path_center_pixels[index] = center
 
         if imshow:
             # Show keypoints
             cv2.imshow("Map", image)
         # rospy.loginfo('Drawing map completed')
-        return(image), shortest_path_center_pixels
+        return(image)
 
     def draw_window(self,
                     image,              #- Input image
@@ -161,28 +196,32 @@ class ObstacleTracker(object):
         
         return x, y, size
     
-    # def publish_obstacle(self, x, y ,size):
-    #     blob_point = Point()
-    #     blob_point.x = x
-    #     blob_point.y = y
-    #     blob_point.z = size 
-
-    #     self.pub_blob.publish(blob_point)
-    
-    def generate_map(self, image, window_adim, cur_pos_center, goal_pos_center):
-        rospy.loginfo('Detecting obstacles started')
+    def crop_image(self, image, window_adim):
         rows = image.shape[0]
         cols = image.shape[1]
+        
+        if window_adim is not None:
+            x_min_px    = int(cols*window_adim[0])
+            y_min_px    = int(rows*window_adim[1])
+            x_max_px    = int(cols*window_adim[2])
+            y_max_px    = int(rows*window_adim[3]) 
+
+        else:
+            x_min_px    = 0
+            y_min_px    = 0
+            x_max_px    = int(cols)
+            y_max_px    = int(rows) 
+
+        window_image = image[y_min_px:y_max_px, x_min_px:x_max_px]
+
+        return window_image
+
+    def generate_map(self, image, window_adim, cur_pos_center, goal_pos_center, update_obstacles=False):
+        # rospy.loginfo('Detecting obstacles started')
 
         obstacles_map = []
-        obstacles_map_coordinates = []
-        
-        x_min_px    = int(cols*window_adim[0])
-        y_min_px    = int(rows*window_adim[1])
-        x_max_px    = int(cols*window_adim[2])
-        y_max_px    = int(rows*window_adim[3]) 
-        
-        window_image = image[y_min_px:y_max_px, x_min_px:x_max_px]
+
+        window_image = self.crop_image(image, window_adim)
 
         rows = window_image.shape[0]
         cols = window_image.shape[1]
@@ -190,13 +229,14 @@ class ObstacleTracker(object):
         cur_pos_center_indexes = goal_pos_center_indexes = None
 
         # Robot size - should be equal with the box size
-        offset = 50
+        offset = self.offset
         
         for (i, row) in enumerate(range(0, rows-offset, offset)):
             row_list = []
 
             for (j, col) in enumerate(range(0, cols-offset, offset)):
                 box = window_image[col:col+offset, row:row+offset]
+                cv2.imshow('box', box)
                 is_obstacle = self.does_image_contain_obstacles(box)
                 # obstacles_map.append(255 if is_obstacle else 0) 
                 row_list.append(1 if is_obstacle else 0)
@@ -213,7 +253,8 @@ class ObstacleTracker(object):
                     if (col <= x) and (x <= col+offset) and (row <= y) and (y <= row+offset+offset):
                         goal_pos_center_indexes = (j-1,i-1)
 
-            obstacles_map.append(row_list)
+            if update_obstacles:
+                obstacles_map.append(row_list)
             
             # cv2.imshow('box r:'+str(row)+' c:'+str(col), box)
         
@@ -221,7 +262,7 @@ class ObstacleTracker(object):
         # obstacles_map = obstacles_map.flatten().squeeze()
         # for ob in obstacles_map:
         #     print(ob)
-        rospy.loginfo('Detecting obstacles completed')
+        # rospy.loginfo('Detecting obstacles completed')
         return obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes
 
     def does_image_contain_obstacles(self, image):

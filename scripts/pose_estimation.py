@@ -157,24 +157,28 @@ def detect_obstacles_and_find_path(undistort_frame, image_with_pose, window, cur
 
 	if not is_detecting_obstacles_completed:
 		obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes = obstacle_detector.generate_map(
-			undistort_frame, window, current_position['center'], target_position['center'])
-
+			undistort_frame, window, current_position['center'], target_position['center'], update_obstacles=True)
 		is_detecting_obstacles_completed = True
+
+	_, cur_pos_center_indexes, goal_pos_center_indexes = obstacle_detector.generate_map(
+			undistort_frame, window, current_position['center'], target_position['center'], update_obstacles=False)
 	
 	# print((shortest_path is None), (cur_pos_center_indexes is not None), (goal_pos_center_indexes is not None))
-	if not is_shortest_path_generated:
+	if is_detecting_obstacles_completed and not is_shortest_path_generated:
 		shortest_path = path_planning.find_shortest_path(obstacles_map, cur_pos_center_indexes, 
 			goal_pos_center_indexes)
 
 		# We don't need the first and the last because we have markers 
 		shortest_path = shortest_path[:-1]
+		shortest_path_center_pixels = obstacle_detector.convert_center_to_pixels(image_with_pose, window, shortest_path)
 
 		is_shortest_path_generated = True
 
-	# print(shortest_path)
+
 	if is_detecting_obstacles_completed and is_shortest_path_generated:
-		_, shortest_path_center_pixels = obstacle_detector.draw_map(image_with_pose, obstacles_map, 
+		obstacle_detector.draw_map(image_with_pose, obstacles_map, 
 			window, shortest_path, cur_pos_center_indexes, goal_pos_center_indexes, imshow=True)
+
 	
 	return shortest_path_center_pixels, shortest_path, cur_pos_center_indexes
 
@@ -184,20 +188,19 @@ def navigate_robot(shortest_path_center_pixels, shortest_path, cur_pos_center_in
 		return
 
 	for i, (center_pixels, center_indexes) in enumerate(zip(shortest_path_center_pixels, shortest_path)):
-		
 		if (cur_pos_center_indexes == center_indexes):
-			corners = convert_center_to_corners(shortest_path_center_pixels[i+1], ROBOT_SIZE_IN_CENTIMETERS)
-			
-			rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(
-				corners, 
-				ROBOT_SIZE_IN_CENTIMETERS, 
-				CAMERA_MATRIX, 
-				DISTORTION_COEF
-			)
-			rospy.loginfo(f'Robot position {cur_pos_center_indexes}, middlepoint position {center_indexes}')
-			rospy.loginfo(f'Move to path index {i+1} out of {len(shortest_path)}')
-			message = generate_message(rvec, tvec)
-			target_position_publisher.publish(message)
+			if i+1 < len(shortest_path_center_pixels):
+				corners = convert_center_to_corners(shortest_path_center_pixels[i+1], ROBOT_SIZE_IN_CENTIMETERS)
+				
+				rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(
+					corners, 
+					ROBOT_SIZE_IN_CENTIMETERS, 
+					CAMERA_MATRIX, 
+					DISTORTION_COEF
+				)
+				rospy.loginfo(f'Robot position {cur_pos_center_indexes}, middlepoint position {center_indexes} Move to path index {i+1} out of {len(shortest_path)}')
+				message = generate_message(rvec, tvec)
+				target_position_publisher.publish(message)
 			
 def receive_image():   
 	# Node is subscribing to the video_frames topic
@@ -246,13 +249,13 @@ if __name__ == '__main__':
 	current_position = dict(corners=None, center=None, rvec=None, tvec=None) 
 	target_position = dict(corners=None, center=None, rvec=None, tvec=None)
 
-	receive_image()
+	# receive_image()
 
-	# data = cv2.imread('/home/manos/Desktop/obstacles.png')
-	# while not rospy.is_shutdown():
-	# 	on_image_received(data)
-	# 	#-- press q to quit
-	# 	if cv2.waitKey(1) & 0xFF == ord('q'):
-	# 		break
+	data = cv2.imread('/home/manos/Desktop/obstacles.png')
+	while not rospy.is_shutdown():
+		on_image_received(data)
+		#-- press q to quit
+		if cv2.waitKey(1) & 0xFF == ord('q'):
+			break
 
 	
