@@ -59,14 +59,14 @@ class Controller:
         # print('theta_current: ', math.degrees(self.theta_current))
                 
     def set_target_pos(self, data: Pose_estimation_vectors):
-        if self.target_homogenious_matrix is None:
-            rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))
-            translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
-            homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
-            self.target_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
-            
-            r = R.from_matrix(rotational_matrix)
-            self.theta_target = r.as_euler('XYZ', degrees=False)[2]
+        # if self.target_homogenious_matrix is None:
+        rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))
+        translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
+        homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
+        self.target_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
+        
+        r = R.from_matrix(rotational_matrix)
+        self.theta_target = r.as_euler('XYZ', degrees=False)[2]
         # print('theta_target: ', math.degrees(self.theta_target))
         # print('\n Target Homogeneous\n',self.target_homogenious_matrix)
 
