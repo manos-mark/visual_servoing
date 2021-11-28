@@ -126,6 +126,8 @@ def generate_message(rvec, tvec):
 	
 
 def on_image_received(data): 
+	global shortest_path, shortest_path_center_pixels
+
 	# Convert ROS Image message to OpenCV image
 	undistort_frame = preprocess_image(data)
 
@@ -134,9 +136,14 @@ def on_image_received(data):
 	if (current_position is not None) and (target_position is not None):	
 		publish_position(current_position, None)
 
-		shortest_path_center_pixels, shortest_path, cur_pos_center_indexes = detect_obstacles_and_find_path(undistort_frame, image_with_pose, window, current_position, target_position)
+		# Find the map only at the first iteration
+		if not shortest_path:
+			shortest_path_center_pixels, shortest_path, cur_pos_center_indexes = detect_obstacles_and_find_path(undistort_frame, image_with_pose, window, current_position, target_position)
 		
-		navigate_robot(shortest_path_center_pixels, shortest_path, cur_pos_center_indexes)
+		cur_pos_center_indexes = obstacle_detector.convert_current_position_to_pixels(undistort_frame, window, current_position['center'])
+		
+		if shortest_path:
+			navigate_robot(undistort_frame, shortest_path_center_pixels, shortest_path, cur_pos_center_indexes)
 
 	else:
 		rospy.loginfo('Waiting for current and target position')
@@ -153,44 +160,32 @@ def publish_position(current_position, target_position):
 
 
 def detect_obstacles_and_find_path(undistort_frame, image_with_pose, window, current_position, target_position):
-	global is_detecting_obstacles_completed, is_shortest_path_generated, shortest_path, shortest_path_center_pixels, cur_pos_center_indexes, goal_pos_center_indexes, obstacles_map
+	obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes = obstacle_detector.generate_map(
+		undistort_frame, window, current_position['center'], target_position['center'])
 
-	if not is_detecting_obstacles_completed:
-		obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes = obstacle_detector.generate_map(
-			undistort_frame, window, current_position['center'], target_position['center'], update_obstacles=True)
-		is_detecting_obstacles_completed = True
+	shortest_path = path_planning.find_shortest_path(obstacles_map, cur_pos_center_indexes, 
+		goal_pos_center_indexes)
 
-	_, cur_pos_center_indexes, goal_pos_center_indexes = obstacle_detector.generate_map(
-			undistort_frame, window, current_position['center'], target_position['center'], update_obstacles=False)
-	
-	# print((shortest_path is None), (cur_pos_center_indexes is not None), (goal_pos_center_indexes is not None))
-	if is_detecting_obstacles_completed and not is_shortest_path_generated:
-		shortest_path = path_planning.find_shortest_path(obstacles_map, cur_pos_center_indexes, 
-			goal_pos_center_indexes)
+	# We don't need the first and the last because we have markers 
+	shortest_path = shortest_path[:-1]
+	shortest_path_center_pixels = obstacle_detector.convert_center_to_pixels(image_with_pose, window, shortest_path)
 
-		# We don't need the first and the last because we have markers 
-		shortest_path = shortest_path[:-1]
-		shortest_path_center_pixels = obstacle_detector.convert_center_to_pixels(image_with_pose, window, shortest_path)
+	obstacle_detector.draw_map(image_with_pose, obstacles_map, 
+		window, shortest_path, cur_pos_center_indexes, goal_pos_center_indexes, imshow=True)
 
-		is_shortest_path_generated = True
-
-
-	if is_detecting_obstacles_completed and is_shortest_path_generated:
-		obstacle_detector.draw_map(image_with_pose, obstacles_map, 
-			window, shortest_path, cur_pos_center_indexes, goal_pos_center_indexes, imshow=True)
-
-	
 	return shortest_path_center_pixels, shortest_path, cur_pos_center_indexes
 
 
-def navigate_robot(shortest_path_center_pixels, shortest_path, cur_pos_center_indexes):
+def navigate_robot(frame, shortest_path_center_pixels, shortest_path, cur_pos_center_indexes):
 	if (shortest_path is None) or (shortest_path_center_pixels is None):
 		return
 
 	for i, (center_pixels, center_indexes) in enumerate(zip(shortest_path_center_pixels, shortest_path)):
 		if (cur_pos_center_indexes == center_indexes):
+			
 			if i+1 < len(shortest_path_center_pixels):
-				corners = convert_center_to_corners(shortest_path_center_pixels[i+1], ROBOT_SIZE_IN_CENTIMETERS)
+				
+				corners = convert_center_to_corners(frame, shortest_path_center_pixels[i+1], ROBOT_SIZE_IN_PIXELS, imshow=True)
 				
 				rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(
 					corners, 
@@ -198,9 +193,14 @@ def navigate_robot(shortest_path_center_pixels, shortest_path, cur_pos_center_in
 					CAMERA_MATRIX, 
 					DISTORTION_COEF
 				)
-				rospy.loginfo(f'Robot position {cur_pos_center_indexes}, middlepoint position {center_indexes} Move to path index {i+1} out of {len(shortest_path)}')
+
+				# Draw Axis
+				cv2.aruco.drawAxis(frame, CAMERA_MATRIX, DISTORTION_COEF, rvec, tvec, 0.1)  
+
+				# rospy.loginfo(f'Robot position {cur_pos_center_indexes}, middlepoint position {center_indexes} Move to path index {i+1} out of {len(shortest_path)}')
 				message = generate_message(rvec, tvec)
 				target_position_publisher.publish(message)
+				cv2.imshow('Middlepoint pose', frame)
 			
 def receive_image():   
 	# Node is subscribing to the video_frames topic
@@ -233,18 +233,9 @@ if __name__ == '__main__':
 	obstacle_detector = ObstacleTracker(hsv_min, hsv_max, ROBOT_SIZE_IN_PIXELS)
 	
 	# We define the detection area [x_min, y_min, x_max, y_max] adimensional (0.0 to 1.0) starting from top left corner
-	window = [0.13, 0.05, 0.96, 0.80]
+	window = None#[0.13, 0.05, 0.96, 0.80]#[0.13, 0.05, 0.96, 0.80]
 
-	# load the ArUCo dictionary, grab the ArUCo parameters, and detect the markers
-	# aruco_dict_type = cv2.aruco.DICT_4X4_100
-	# aruco_dict_type = cv2.aruco.DICT_ARUCO_ORIGINAL #cv2.aruco['DICT_4X4_100']
-
-	current_position = target_position = shortest_path_center_pixels = cur_pos_center_indexes = goal_pos_center_indexes = obstacles_map = None
-
-	is_detecting_obstacles_completed = False
-	is_shortest_path_generated = False
-
-	shortest_path = None
+	current_position = target_position = shortest_path_center_pixels = cur_pos_center_indexes = goal_pos_center_indexes = obstacles_map = shortest_path = None
 
 	current_position = dict(corners=None, center=None, rvec=None, tvec=None) 
 	target_position = dict(corners=None, center=None, rvec=None, tvec=None)

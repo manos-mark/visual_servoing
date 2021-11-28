@@ -3,19 +3,29 @@ import yaml
 import numpy as np
 
 
-def convert_center_to_corners(center, offset):
-  top_left = np.array([center[0]-offset, center[1]-offset], dtype=np.float)
-  bt_left = np.array([center[0]-offset, center[1]+offset], dtype=np.float)
-  top_right = np.array([center[0]+offset, center[1]-offset], dtype=np.float)
-  bt_right = np.array([center[0]+offset, center[1]+offset], dtype=np.float)
-  corners = np.array([[top_left, bt_right, top_right, bt_right]])
-
-  return corners
+def convert_center_to_corners(frame, center, offset, imshow=False):
+	offset /= 2
+	top_left = np.array([(center[0]-offset), (center[1]-offset)], dtype=np.int)
+	bt_left = np.array([(center[0]-offset), (center[1]+offset)], dtype=np.int)
+	top_right = np.array([(center[0]+offset), (center[1]-offset)], dtype=np.int)
+	bt_right = np.array([(center[0]+offset), (center[1]+offset)], dtype=np.int)
+	corners = np.array([[bt_left, top_left, top_right, bt_right]], dtype=np.float)
+	
+	if imshow:
+		cv2.circle(frame, center, 6, (0, 140, 255), -1)	
+		cv2.circle(frame, (int(top_left[0]), int(top_left[1])), 6, (0, 140, 255), -1)
+		cv2.circle(frame, (int(bt_left[0]), int(bt_left[1])), 6, (0, 140, 255), -1)
+		cv2.circle(frame, (int(top_right[0]), int(top_right[1])), 6, (0, 140, 255), -1)
+		cv2.circle(frame, (int(bt_right[0]), int(bt_right[1])), 6, (0, 140, 255), -1)
+		cv2.imshow('axis', frame)
+  
+	return corners
 
 
 def convert_corners_to_center(corners):
 	if corners is None:
 		return None
+
 	corners = corners.reshape((4, 2)) 
 	(topLeft, topRight, bottomRight, bottomLeft) = corners
 	# convert each of the (x, y)-coordinate pairs to integers

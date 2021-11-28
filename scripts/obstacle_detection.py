@@ -20,30 +20,26 @@ class ObstacleTracker(object):
         if shortest_path is None:
             return
             
-        image = image.copy()
+        if window_adim: 
+            image = self.crop_image(image, window_adim)
+
         rows = image.shape[0]
         cols = image.shape[1]
-        
-        if window_adim is not None:
-            x_min_px    = int(cols*window_adim[0])
-            y_min_px    = int(rows*window_adim[1])
-            x_max_px    = int(cols*window_adim[2])
-            y_max_px    = int(rows*window_adim[3]) 
-
-        else:
-            x_min_px    = 0
-            y_min_px    = 0
-            x_max_px    = int(cols)
-            y_max_px    = int(rows) 
                 
         offset = self.offset
 
+        rows_count = int(rows/offset)
+        cols_count = int(cols/offset)
+
+        rows = rows_count*offset
+        cols = cols_count*offset
+        
         shortest_path_center_pixels = [0] * len(shortest_path) #np.zeros_like(shortest_path)
 
-        for (i, col) in enumerate(range(y_min_px+offset, y_max_px, offset)):
-            for (j, row) in enumerate(range(x_min_px, x_max_px-offset, offset)):
+        for (i, col) in enumerate(range(0, cols, offset)):
+            for (j, row) in enumerate(range(0, rows, offset)):
                 
-                center = (row+int(offset/2), col-int(offset/2))
+                center = (row+int(offset/2), col+int(offset/2))
 
                 for (index, value) in enumerate(shortest_path):
                     if (j,i) == value:
@@ -68,57 +64,57 @@ class ObstacleTracker(object):
         """
         # rospy.loginfo('Drawing map started')
 
-        image = image.copy()
-        rows = image.shape[0]
-        cols = image.shape[1]
-        
-        if window_adim is not None:
-            x_min_px    = int(cols*window_adim[0])
-            y_min_px    = int(rows*window_adim[1])
-            x_max_px    = int(cols*window_adim[2])
-            y_max_px    = int(rows*window_adim[3]) 
+        obstacles_map = np.array(obstacles_map).T
+        obstacles_map = obstacles_map.tolist()
+        # for i in obstacles_map:
+        #     print(i)
+        # print('\n')
+        if window_adim:
+            image = self.crop_image(image, window_adim)
 
-        else:
-            x_min_px    = 0
-            y_min_px    = 0
-            x_max_px    = int(cols)
-            y_max_px    = int(rows) 
+        cols = image.shape[0]
+        rows = image.shape[1]
         
         offset = self.offset
-        #-- Draw a rectangle from top left to bottom right corner
-        image = cv2.rectangle(image,(x_min_px,y_min_px),(x_max_px,y_max_px),color,line)
-        image = image[y_min_px:y_max_px+offset, x_min_px:x_max_px+offset]
         
+        rows_count = int(rows/offset)
+        cols_count = int(cols/offset)
+
+        rows = rows_count*offset
+        cols = cols_count*offset
         
-        for row in range(y_min_px, y_max_px, offset):
-            image = cv2.line(image, (x_min_px, row), (x_max_px, row), (100,0,0), line)
+        for i, row in enumerate(range(0, rows+offset, offset)):
+            # if i <= rows_count:
+            image = cv2.line(image, (0, row), (cols_count*offset, row), (0,0,0), line)
 
-        for col in range(x_min_px, x_max_px, offset):
-            image = cv2.line(image, (col, y_min_px), (col, y_max_px), (100,0,0), line)
+        for i, col in enumerate(range(0, cols+offset, offset)):
+            # if i <= cols_count:  
+            image = cv2.line(image, (col, 0), (col, rows_count*offset), (0,0,0), line)
 
-        for (i, col) in enumerate(range(y_min_px+offset, y_max_px, offset)):
-            for (j, row) in enumerate(range(x_min_px, x_max_px-offset, offset)):
-                
-                if obstacles_map is not None: # and i < len(obstacles_map)-1 and j < len(obstacles_map)-1:
-                    is_obstacle = obstacles_map[j][i]
+        for (i, col) in enumerate(range(offset, cols+offset, offset)):
+            for (j, row) in enumerate(range(0, rows, offset)):
+                if obstacles_map is not None and i <= len(obstacles_map)-1 and j <= len(obstacles_map)-1:
+                    is_obstacle = obstacles_map[i][j]
+                    
                     text = 'X' if is_obstacle else 'O' 
                     color = (255,255,0) if is_obstacle else (255,0,0)
                     
                     center = (row+int(offset/2), col-int(offset/2))
+                    text_center = (row+int(offset/3), col-int(offset/3))
 
-                    image = cv2.putText(image, text, center, cv2.FONT_HERSHEY_SIMPLEX, 
+                    image = cv2.putText(image, text, text_center, cv2.FONT_HERSHEY_SIMPLEX, 
                         1, color, 3, cv2.LINE_AA)
 
                     if start_index is not None:
                         if (j,i) == start_index:
                                 color = (255, 255, 255)
-                                cv2.putText(image, 'S', center, cv2.FONT_HERSHEY_SIMPLEX, 
+                                cv2.putText(image, 'S', text_center, cv2.FONT_HERSHEY_SIMPLEX, 
                                     1, color, 5, cv2.LINE_AA)
                             
                     if goal_index is not None:
                         if (j,i) == goal_index:
                             color = (255, 255, 255)
-                            cv2.putText(image, 'G', center, cv2.FONT_HERSHEY_SIMPLEX, 
+                            cv2.putText(image, 'G', text_center, cv2.FONT_HERSHEY_SIMPLEX, 
                                 1, color, 5, cv2.LINE_AA)
                 
                 #Radius of circle
@@ -138,35 +134,6 @@ class ObstacleTracker(object):
             # Show keypoints
             cv2.imshow("Map", image)
         # rospy.loginfo('Drawing map completed')
-        return(image)
-
-    def draw_window(self,
-                    image,              #- Input image
-                    window_adim,        #- window in adimensional units
-                    color=(255,0,0),    #- line's color
-                    line=5,             #- line's thickness
-                    imshow=False        #- show the image
-                ):
-        """
-        Draw search window: returns the image
-        return(image)
-        """
-        
-        rows = image.shape[0]
-        cols = image.shape[1]
-        
-        x_min_px    = int(cols*window_adim[0])
-        y_min_px    = int(rows*window_adim[1])
-        x_max_px    = int(cols*window_adim[2])
-        y_max_px    = int(rows*window_adim[3])  
-        
-        #-- Draw a rectangle from top left to bottom right corner
-        image = cv2.rectangle(image,(x_min_px,y_min_px),(x_max_px,y_max_px),color,line)
-        
-        if imshow:
-            # Show keypoints
-            cv2.imshow("Keypoints", image)
-
         return(image)
 
     def get_relative_position(self, image, keyPoint):
@@ -199,6 +166,16 @@ class ObstacleTracker(object):
     def crop_image(self, image, window_adim):
         rows = image.shape[0]
         cols = image.shape[1]
+        # print(rows, cols)
+
+        # offset = self.offset
+        # rows_count = int(rows/offset)
+        # cols_count = int(cols/offset)
+
+        # rows = rows_count*offset
+        # cols = cols_count*offset
+
+        # print(rows, cols)
         
         if window_adim is not None:
             x_min_px    = int(cols*window_adim[0])
@@ -212,57 +189,85 @@ class ObstacleTracker(object):
             x_max_px    = int(cols)
             y_max_px    = int(rows) 
 
-        window_image = image[y_min_px:y_max_px, x_min_px:x_max_px]
+        image = image[y_min_px:y_max_px, x_min_px:x_max_px]
 
-        return window_image
+        return image
 
-    def generate_map(self, image, window_adim, cur_pos_center, goal_pos_center, update_obstacles=False):
+    def convert_current_position_to_pixels(self, image, window_adim, cur_pos_center):
+        # rospy.loginfo('Detecting obstacles started')
+
+        if window_adim:
+            image = self.crop_image(image, window_adim)
+
+        rows = image.shape[0]
+        cols = image.shape[1]
+
+        cur_pos_center_indexes = None
+
+        # Robot size - should be equal with the box size
+        offset = self.offset
+        
+        rows_count = int(rows/offset)
+        cols_count = int(cols/offset)
+
+        rows = rows_count*offset
+        cols = cols_count*offset
+        
+        for (i, row) in enumerate(range(0, rows, offset)):
+            for (j, col) in enumerate(range(0, cols, offset)):
+                if cur_pos_center is not None:
+                    x = cur_pos_center[0]
+                    y = cur_pos_center[1]
+                    if (col <= x) and (x <= col+offset) and (row <= y) and (y <= row+offset+offset):
+                        cur_pos_center_indexes = (j,i)
+        return cur_pos_center_indexes
+
+    def generate_map(self, image, window_adim, cur_pos_center, goal_pos_center):
         # rospy.loginfo('Detecting obstacles started')
 
         obstacles_map = []
 
-        window_image = self.crop_image(image, window_adim)
+        if window_adim:
+            image = self.crop_image(image, window_adim)
 
-        rows = window_image.shape[0]
-        cols = window_image.shape[1]
+        rows = image.shape[0]
+        cols = image.shape[1]
 
         cur_pos_center_indexes = goal_pos_center_indexes = None
 
         # Robot size - should be equal with the box size
         offset = self.offset
         
-        for (i, row) in enumerate(range(0, rows-offset, offset)):
-            row_list = []
+        rows_count = int(rows/offset)
+        cols_count = int(cols/offset)
 
-            for (j, col) in enumerate(range(0, cols-offset, offset)):
-                box = window_image[col:col+offset, row:row+offset]
-                cv2.imshow('box', box)
+        rows = rows_count*offset
+        cols = cols_count*offset
+        
+        for (i, row) in enumerate(range(0, rows, offset)):
+            row_list = []
+            for (j, col) in enumerate(range(0, cols, offset)):
+                box = image[col:col+offset, row:row+offset]
                 is_obstacle = self.does_image_contain_obstacles(box)
                 # obstacles_map.append(255 if is_obstacle else 0) 
                 row_list.append(1 if is_obstacle else 0)
-                
+
                 if cur_pos_center is not None:
                     x = cur_pos_center[0]
                     y = cur_pos_center[1]
                     if (col <= x) and (x <= col+offset) and (row <= y) and (y <= row+offset+offset):
-                        cur_pos_center_indexes = (j-1,i)
+                        cur_pos_center_indexes = (j,i)
 
                 if goal_pos_center is not None:
                     x = goal_pos_center[0]
                     y = goal_pos_center[1]
                     if (col <= x) and (x <= col+offset) and (row <= y) and (y <= row+offset+offset):
-                        goal_pos_center_indexes = (j-1,i-1)
+                        goal_pos_center_indexes = (j,i)
 
-            if update_obstacles:
-                obstacles_map.append(row_list)
-            
-            # cv2.imshow('box r:'+str(row)+' c:'+str(col), box)
-        
-        # obstacles_map = np.array(obstacles_map).T
-        # obstacles_map = obstacles_map.flatten().squeeze()
-        # for ob in obstacles_map:
-        #     print(ob)
+            obstacles_map.append(row_list)
+
         # rospy.loginfo('Detecting obstacles completed')
+        
         return obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes
 
     def does_image_contain_obstacles(self, image):
