@@ -134,16 +134,20 @@ def on_image_received(data):
 	image_with_pose, current_position, target_position = estimate_pose(undistort_frame, imshow=True)
 
 	if (current_position is not None) and (target_position is not None):	
-		publish_position(current_position, None)
+		message = generate_message(current_position['rvec'], current_position['tvec'])
+		current_position_publisher.publish(message)
 
 		# Find the map only at the first iteration
 		if not shortest_path:
+			# message = generate_message(target_position['rvec'], target_position['tvec'])
+			# target_position_publisher.publish(message)
+   
 			shortest_path_center_pixels, shortest_path, cur_pos_center_indexes = detect_obstacles_and_find_path(undistort_frame, image_with_pose, window, current_position, target_position)
 		
-		cur_pos_center_indexes = obstacle_detector.convert_current_position_to_pixels(undistort_frame, window, current_position['center'])
+		# cur_pos_center_indexes = obstacle_detector.convert_current_position_to_pixels(undistort_frame, window, current_position['center'])
 		
-		if shortest_path:
-			navigate_robot(undistort_frame, shortest_path_center_pixels, shortest_path, cur_pos_center_indexes)
+			if shortest_path:
+				navigate_robot(undistort_frame, shortest_path_center_pixels, shortest_path, cur_pos_center_indexes)
 
 	else:
 		rospy.loginfo('Waiting for current and target position')
@@ -180,27 +184,23 @@ def navigate_robot(frame, shortest_path_center_pixels, shortest_path, cur_pos_ce
 	if (shortest_path is None) or (shortest_path_center_pixels is None):
 		return
 
-	for i, (center_pixels, center_indexes) in enumerate(zip(shortest_path_center_pixels, shortest_path)):
-		if (cur_pos_center_indexes == center_indexes):
-			
-			if i+1 < len(shortest_path_center_pixels):
-				
-				corners = convert_center_to_corners(frame, shortest_path_center_pixels[i+1], ROBOT_SIZE_IN_PIXELS, imshow=True)
-				
-				rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(
-					corners, 
-					ROBOT_SIZE_IN_CENTIMETERS, 
-					CAMERA_MATRIX, 
-					DISTORTION_COEF
-				)
+	for center in shortest_path_center_pixels:
+		corners = convert_center_to_corners(frame, center, ROBOT_SIZE_IN_PIXELS, imshow=False)
+		
+		rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(
+			corners, 
+			ROBOT_SIZE_IN_CENTIMETERS, 
+			CAMERA_MATRIX, 
+			DISTORTION_COEF
+		)
 
-				# Draw Axis
-				cv2.aruco.drawAxis(frame, CAMERA_MATRIX, DISTORTION_COEF, rvec, tvec, 0.1)  
+		# Draw Axis
+		cv2.aruco.drawAxis(frame, CAMERA_MATRIX, DISTORTION_COEF, rvec, tvec, 0.1)  
 
-				# rospy.loginfo(f'Robot position {cur_pos_center_indexes}, middlepoint position {center_indexes} Move to path index {i+1} out of {len(shortest_path)}')
-				message = generate_message(rvec, tvec)
-				target_position_publisher.publish(message)
-				cv2.imshow('Middlepoint pose', frame)
+		# rospy.loginfo(f'Robot position {cur_pos_center_indexes}, middlepoint position {center_indexes} Move to path index {i+1} out of {len(shortest_path)}')
+		message = generate_message(rvec, tvec)
+		target_position_publisher.publish(message)
+		cv2.imshow(f'Middlepoint pose', frame)
 			
 def receive_image():   
 	# Node is subscribing to the video_frames topic
@@ -240,13 +240,13 @@ if __name__ == '__main__':
 	current_position = dict(corners=None, center=None, rvec=None, tvec=None) 
 	target_position = dict(corners=None, center=None, rvec=None, tvec=None)
 
-	# receive_image()
+	receive_image()
 
-	data = cv2.imread('/home/manos/Desktop/obstacles.png')
-	while not rospy.is_shutdown():
-		on_image_received(data)
-		#-- press q to quit
-		if cv2.waitKey(1) & 0xFF == ord('q'):
-			break
+	# data = cv2.imread('/home/manos/Desktop/obstacles.png')
+	# while not rospy.is_shutdown():
+	# 	on_image_received(data)
+	# 	#-- press q to quit
+	# 	if cv2.waitKey(1) & 0xFF == ord('q'):
+	# 		break
 
 	
