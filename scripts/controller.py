@@ -35,7 +35,6 @@ class Controller:
                 rospy.loginfo('Waiting for path...')
                 rospy.sleep(3.0)
             else:
-                print(len(self.target_position_path))
                 rospy.loginfo(f'Robot is moving to target with index {i}!')
                 self.move_robot()
                 i += 1
@@ -105,7 +104,7 @@ class Controller:
             
             v = k_rho * self.rho
             w = k_alpha * self.alpha + k_beta * self.beta
-            print(f'\ntheta: {math.degrees(theta)}, rho: {self.rho}. alpha: {math.degrees(self.alpha)} beta: {math.degrees(self.beta)}')
+            # print(f'\ntheta: {math.degrees(theta)}, rho: {self.rho}. alpha: {math.degrees(self.alpha)} beta: {math.degrees(self.beta)}')
 
             if constant_vel:
                 abs_v = abs(v)
@@ -131,9 +130,9 @@ class Controller:
         # Controller constants
         k_rho = 0.2
         k_alpha = 0.8
-        k_beta = 0.950
+        k_beta = 0.350
 
-        while not target_reached:
+        while (not target_reached) and (not rospy.is_shutdown()):
             # Fix the initial angle 0.01
             while (abs(self.beta) > 0.07) and (not rospy.is_shutdown()):
 
@@ -156,7 +155,7 @@ class Controller:
             
             # Go to target 0.09
             # while (self.rho >= 0.09) and (abs(self.beta) <= 0.09) and (not rospy.is_shutdown()): 
-            while (self.rho >= 0.03) and (not rospy.is_shutdown()): 
+            while (self.rho >= 0.04) and (not rospy.is_shutdown()): 
                 # k_beta = -0.15
                 
                 if (self.curr_homogenious_matrix is None) or (self.target_homogenious_matrix is None):
@@ -173,7 +172,7 @@ class Controller:
 
                 # distance to target
                 self.rho = math.sqrt(math.pow(dy, 2) + math.pow(dx, 2)) # self.distance_to_target(self.current_pos, self.target_pos)
-                print('beta: ',self.beta, '\tdx: ',dx, '\tdy: ',dy, '\trho: ', self.rho)
+                # print('beta: ',self.beta, '\tdx: ',dx, '\tdy: ',dy, '\trho: ', self.rho)
     
                 v = k_rho * self.rho                
                 w = 0
@@ -217,9 +216,10 @@ class Controller:
             #     # print('w: ',w)
             #     self.send_velocity_to_robot(v,w)
 
-            if self.rho < 0.07:
+            if (self.rho < 0.04):# and (abs(self.beta) < 0.07):
                 rospy.loginfo('Target reached!')
                 target_reached = True
+                break
 
     def send_velocity_to_robot(self, v, w):
         twist = Twist()

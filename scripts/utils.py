@@ -3,8 +3,7 @@ import yaml
 import numpy as np
 
 
-def convert_center_to_corners(frame, center, offset, imshow=False):
-	offset /= 2
+def convert_center_to_corners(frame, center, offset=15, imshow=False):
 	top_left = np.array([(center[0]-offset), (center[1]-offset)], dtype=np.int)
 	bt_left = np.array([(center[0]-offset), (center[1]+offset)], dtype=np.int)
 	top_right = np.array([(center[0]+offset), (center[1]-offset)], dtype=np.int)

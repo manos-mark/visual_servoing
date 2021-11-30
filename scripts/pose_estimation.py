@@ -24,7 +24,8 @@ TARGET_ID = 1
 
 # Robot specification
 ROBOT_SIZE_IN_PIXELS = 50
-ROBOT_SIZE_IN_CENTIMETERS = 0.15
+ROBOT_SIZE_IN_MILI = 15
+ROBOT_SIZE_IN_CENTIMETERS = ROBOT_SIZE_IN_MILI / 100
 
 
 def estimate_current_target_pose(frame, 
@@ -142,6 +143,7 @@ def on_image_received(data):
 	image_with_pose, current_position, target_position = estimate_current_target_pose(undistort_frame, imshow=True)
 
 	if (current_position is not None) and (target_position is not None):	
+		
 		message = generate_message(current_position['rvec'], current_position['tvec'])
 		current_position_publisher.publish(message)
 
@@ -150,7 +152,11 @@ def on_image_received(data):
 			shortest_path_center_pixels, shortest_path = detect_obstacles_and_find_path(undistort_frame, image_with_pose, current_position, target_position)
 		
 			if shortest_path:
+				shortest_path_center_pixels = shortest_path_center_pixels[:-2]
 				path_poses = estimate_path_poses(undistort_frame, shortest_path_center_pixels, shortest_path)
+
+				message = generate_message(target_position['rvec'], target_position['tvec'])
+				path_poses.append(message)
 				
 				for pose in path_poses:
 					target_position_publisher.publish(pose)
@@ -166,7 +172,7 @@ def detect_obstacles_and_find_path(undistort_frame, image_with_pose, current_pos
 		goal_pos_center_indexes)
 
 	# We don't need the first and the last because we have markers 
-	# shortest_path = shortest_path[1:]
+	shortest_path = shortest_path[1:]
 	shortest_path_center_pixels = obstacle_detector.convert_center_to_pixels(image_with_pose, shortest_path)
 
 	obstacle_detector.draw_map(image_with_pose, obstacles_map, 
@@ -181,7 +187,7 @@ def estimate_path_poses(frame, shortest_path_center_pixels, shortest_path):
 
 	path_poses = []
 	for center in shortest_path_center_pixels:
-		corners = convert_center_to_corners(frame, center, ROBOT_SIZE_IN_PIXELS, imshow=False)
+		corners = convert_center_to_corners(frame, center, ROBOT_SIZE_IN_MILI, imshow=True)
 		
 		rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(
 			corners, 

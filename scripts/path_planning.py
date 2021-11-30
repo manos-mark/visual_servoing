@@ -118,4 +118,4 @@ if __name__ == '__main__':
   end = (4,0)#4
 
   path = find_shortest_path(maze, start, end)
-  print(path)
+  print(f"Path from algorithm: {path}")
