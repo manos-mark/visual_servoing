@@ -166,7 +166,7 @@ def detect_obstacles_and_find_path(undistort_frame, image_with_pose, current_pos
 		goal_pos_center_indexes)
 
 	# We don't need the first and the last because we have markers 
-	shortest_path = shortest_path[1:]
+	# shortest_path = shortest_path[1:]
 	shortest_path_center_pixels = obstacle_detector.convert_center_to_pixels(image_with_pose, shortest_path)
 
 	obstacle_detector.draw_map(image_with_pose, obstacles_map, 
