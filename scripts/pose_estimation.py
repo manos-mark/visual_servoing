@@ -95,6 +95,7 @@ def estimate_current_target_pose(frame,
 				target_position['corners'] = corners[1] 
 				target_position['rvec'] = rvec
 				target_position['tvec'] = tvec 
+				# target_position['tvec'][0][0][2] = current_position['tvec'][0][0][2]
 
 	if imshow:
 		cv2.imshow('Estimated Pose', frame)
@@ -152,7 +153,6 @@ def on_image_received(data):
 			shortest_path_center_pixels, shortest_path = detect_obstacles_and_find_path(undistort_frame, image_with_pose, current_position, target_position)
 		
 			if shortest_path:
-				shortest_path_center_pixels = shortest_path_center_pixels[:-2]
 				path_poses = estimate_path_poses(undistort_frame, shortest_path_center_pixels, shortest_path)
 
 				message = generate_message(target_position['rvec'], target_position['tvec'])
@@ -172,7 +172,7 @@ def detect_obstacles_and_find_path(undistort_frame, image_with_pose, current_pos
 		goal_pos_center_indexes)
 
 	# We don't need the first and the last because we have markers 
-	shortest_path = shortest_path[1:]
+	shortest_path = shortest_path[1:-1]
 	shortest_path_center_pixels = obstacle_detector.convert_center_to_pixels(image_with_pose, shortest_path)
 
 	obstacle_detector.draw_map(image_with_pose, obstacles_map, 
