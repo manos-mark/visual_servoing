@@ -16,12 +16,9 @@ class ObstacleTracker(object):
         self.hsv_max = hsv_max
         self.offset = robot_size_in_pixels
 
-    def convert_center_to_pixels(self, image, window_adim, shortest_path):
+    def convert_center_to_pixels(self, image, shortest_path):
         if shortest_path is None:
             return
-            
-        if window_adim: 
-            image = self.crop_image(image, window_adim)
 
         rows = image.shape[0]
         cols = image.shape[1]
@@ -50,7 +47,6 @@ class ObstacleTracker(object):
     def draw_map(self,
                     image,              #- Input image
                     obstacles_map,
-                    window_adim,        #- window in adimensional units
                     shortest_path=None,
                     start_index=None, 
                     goal_index=None,
@@ -58,19 +54,11 @@ class ObstacleTracker(object):
                     line=1,             #- line's thickness
                     imshow=False        #- show the image
                 ):
-        """
-        Draw search window: returns the image
-        return(image)
-        """
+        
         # rospy.loginfo('Drawing map started')
 
         obstacles_map = np.array(obstacles_map).T
         obstacles_map = obstacles_map.tolist()
-        # for i in obstacles_map:
-        #     print(i)
-        # print('\n')
-        if window_adim:
-            image = self.crop_image(image, window_adim)
 
         cols = image.shape[0]
         rows = image.shape[1]
@@ -163,72 +151,10 @@ class ObstacleTracker(object):
         
         return x, y, size
     
-    def crop_image(self, image, window_adim):
-        rows = image.shape[0]
-        cols = image.shape[1]
-        # print(rows, cols)
-
-        # offset = self.offset
-        # rows_count = int(rows/offset)
-        # cols_count = int(cols/offset)
-
-        # rows = rows_count*offset
-        # cols = cols_count*offset
-
-        # print(rows, cols)
-        
-        if window_adim is not None:
-            x_min_px    = int(cols*window_adim[0])
-            y_min_px    = int(rows*window_adim[1])
-            x_max_px    = int(cols*window_adim[2])
-            y_max_px    = int(rows*window_adim[3]) 
-
-        else:
-            x_min_px    = 0
-            y_min_px    = 0
-            x_max_px    = int(cols)
-            y_max_px    = int(rows) 
-
-        image = image[y_min_px:y_max_px, x_min_px:x_max_px]
-
-        return image
-
-    def convert_current_position_to_pixels(self, image, window_adim, cur_pos_center):
-        # rospy.loginfo('Detecting obstacles started')
-
-        if window_adim:
-            image = self.crop_image(image, window_adim)
-
-        rows = image.shape[0]
-        cols = image.shape[1]
-
-        cur_pos_center_indexes = None
-
-        # Robot size - should be equal with the box size
-        offset = self.offset
-        
-        rows_count = int(rows/offset)
-        cols_count = int(cols/offset)
-
-        rows = rows_count*offset
-        cols = cols_count*offset
-        
-        for (i, row) in enumerate(range(0, rows, offset)):
-            for (j, col) in enumerate(range(0, cols, offset)):
-                if cur_pos_center is not None:
-                    x = cur_pos_center[0]
-                    y = cur_pos_center[1]
-                    if (col <= x) and (x <= col+offset) and (row <= y) and (y <= row+offset+offset):
-                        cur_pos_center_indexes = (j,i)
-        return cur_pos_center_indexes
-
-    def generate_map(self, image, window_adim, cur_pos_center, goal_pos_center):
+    def generate_map(self, image, cur_pos_center, goal_pos_center):
         # rospy.loginfo('Detecting obstacles started')
 
         obstacles_map = []
-
-        if window_adim:
-            image = self.crop_image(image, window_adim)
 
         rows = image.shape[0]
         cols = image.shape[1]
@@ -249,7 +175,6 @@ class ObstacleTracker(object):
             for (j, col) in enumerate(range(0, cols, offset)):
                 box = image[col:col+offset, row:row+offset]
                 is_obstacle = self.does_image_contain_obstacles(box)
-                # obstacles_map.append(255 if is_obstacle else 0) 
                 row_list.append(1 if is_obstacle else 0)
 
                 if cur_pos_center is not None:
@@ -291,12 +216,9 @@ if __name__=="__main__":
     hsv_min = (0, 100, 0)
     hsv_max = (5, 255, 255) 
 
-    # We define the detection area [x_min, y_min, x_max, y_max] adimensional (0.0 to 1.0) starting from top left corner
-    window = [0.1, 0.07, 0.73, 0.91]
-
     obstacle_detector = ObstacleTracker(hsv_min, hsv_max)
 
-    obstacles_map, rows, cols = obstacle_detector.generate_map(cv_image, window)
+    obstacles_map, rows, cols = obstacle_detector.generate_map(cv_image)
 
     start_index = (4,6)#50
     goal_index = (0,0)#4
@@ -307,7 +229,7 @@ if __name__=="__main__":
     #     print(obstacle_detector.get_relative_position(cv_image, pos))
     
     while not rospy.is_shutdown():
-        obstacle_detector.draw_map(cv_image, obstacles_map, window, shortest_path=shortest_path, start_index=start_index, goal_index=goal_index, imshow=True)
+        obstacle_detector.draw_map(cv_image, obstacles_map, shortest_path=shortest_path, start_index=start_index, goal_index=goal_index, imshow=True)
 
         #-- press q to quit
         if cv2.waitKey(1) & 0xFF == ord('q'):

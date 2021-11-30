@@ -9,7 +9,7 @@ from visual_servoing.msg import Pose_estimation_vectors
 from cv_bridge import CvBridge # Package to convert between ROS and OpenCV Images
 import cv2 # OpenCV library
 import numpy as np
-from utils import ARUCO_DICT, aruco_display, get_calibration_data, convert_corners_to_center, convert_center_to_corners
+from utils import get_calibration_data, convert_corners_to_center, convert_center_to_corners
 from obstacle_detection import ObstacleTracker
 import path_planning
 
@@ -27,20 +27,34 @@ ROBOT_SIZE_IN_PIXELS = 50
 ROBOT_SIZE_IN_CENTIMETERS = 0.15
 
 
-def estimate_pose(frame, 
+def estimate_current_target_pose(frame, 
+			current_id=CURRENT_ID,
+			target_id=TARGET_ID,
 			aruco_dict_type=cv2.aruco.DICT_ARUCO_ORIGINAL, 
 			matrix_coefficients=CAMERA_MATRIX, 
 			distortion_coefficients=DISTORTION_COEF, 
 			imshow=True):
-	'''
-	frame - Frame from the video stream
-	matrix_coefficients - Intrinsic matrix of the calibrated camera
-	distortion_coefficients - Distortion coefficients associated with your camera
+	"""Find all the Aruco markers in the picure and estimate their position.
 
-	return:-
-	frame - The frame with the axis drawn on it
-	'''
-
+	:param frame: Frame from the video stream
+	:type frame: numpy.ndarray
+	:param current_id: ID of the marker placed in the initial position, defaults to CURRENT_ID
+	:type current_id: int, optional
+	:param target_id: ID of the marker placed in the target position, defaults to TARGET_ID
+	:type target_id: int, optional
+	:param aruco_dict_type: Aruco dictionary type, defaults to cv2.aruco.DICT_ARUCO_ORIGINAL
+	:type aruco_dict_type: [type], optional
+	:param matrix_coefficients: Intrinsic matrix of the calibrated camera, defaults to CAMERA_MATRIX
+	:type matrix_coefficients: [type], optional
+	:param distortion_coefficients: Distortion coefficients associated with your camera, defaults to DISTORTION_COEF
+	:type distortion_coefficients: [type], optional
+	:param imshow: Show the image or not?, defaults to True
+	:type imshow: bool, optional
+	
+ 	:return: The frame with the axis drawn on it
+	:rtype: [type]
+	"""
+ 
 	frame = frame.copy()
 	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 	cv2.aruco_dict = cv2.aruco.Dictionary_get(aruco_dict_type)
@@ -64,18 +78,17 @@ def estimate_pose(frame,
 			# Draw a square around the markers
 			cv2.aruco.drawDetectedMarkers(frame, corners) 
 
-				# Draw Axis
+			# Draw Axis
 			cv2.aruco.drawAxis(frame, matrix_coefficients, distortion_coefficients, rvec, tvec, 0.1)  
-			# print('Rotational vector:', rvec[0][0], 'Translational vector:', tvec[0][0])
 			
-			if (marker_id[0] == CURRENT_ID) and (len(corners) >= 1): 
+			if (marker_id[0] == current_id) and (len(corners) >= 1): 
 				# get the center of the position by converting the four corners 
 				current_position['center'] = convert_corners_to_center(corners[0])
 				current_position['corners'] = corners[0]       
 				current_position['rvec'] = rvec
 				current_position['tvec'] = tvec
 
-			elif (marker_id[0] == TARGET_ID) and (len(corners) > 1):
+			elif (marker_id[0] == target_id) and (len(corners) > 1):
 				# get the center of the position by converting the four corners
 				target_position['center'] = convert_corners_to_center(corners[1])
 				target_position['corners'] = corners[1] 
@@ -86,23 +99,18 @@ def estimate_pose(frame,
 		cv2.imshow('Estimated Pose', frame)
 		cv2.waitKey(1)
 
-	return (frame), current_position, target_position
+	return frame, current_position, target_position
 
 
 def preprocess_image(data):
 	# Used to convert between ROS and OpenCV images
 	br = CvBridge()
  
-	# Output debugging information to the terminal
-	# rospy.loginfo("receiving video frame")
-	
 	try:
 		current_frame = br.imgmsg_to_cv2(data, 'bgr8')
 	except:
 		current_frame = np.frombuffer(data.data, dtype=np.uint8).reshape(data.shape[0], data.shape[1], -1)
 
-	# current_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2RGB)
-	
 	h,  w = current_frame.shape[:2]
 	newcameramtx, roi = cv2.getOptimalNewCameraMatrix(CAMERA_MATRIX, DISTORTION_COEF, (WIDTH,HEIGHT), 1, (WIDTH,HEIGHT))
 	
@@ -116,7 +124,7 @@ def preprocess_image(data):
 	return undistort_frame
 
 
-def generate_message(rvec, tvec):
+def generate_message(rvec: list, tvec: list) -> Pose_estimation_vectors:
 	message = Pose_estimation_vectors()
 	if (rvec is not None) and (tvec is not None):
 		message.rotational.x, message.rotational.y, message.rotational.z  = rvec[0][0][0], rvec[0][0][1], rvec[0][0][2]
@@ -126,12 +134,12 @@ def generate_message(rvec, tvec):
 	
 
 def on_image_received(data): 
-	global shortest_path, shortest_path_center_pixels
+	global shortest_path
 
 	# Convert ROS Image message to OpenCV image
 	undistort_frame = preprocess_image(data)
 
-	image_with_pose, current_position, target_position = estimate_pose(undistort_frame, imshow=True)
+	image_with_pose, current_position, target_position = estimate_current_target_pose(undistort_frame, imshow=True)
 
 	if (current_position is not None) and (target_position is not None):	
 		message = generate_message(current_position['rvec'], current_position['tvec'])
@@ -139,51 +147,39 @@ def on_image_received(data):
 
 		# Find the map only at the first iteration
 		if not shortest_path:
-			# message = generate_message(target_position['rvec'], target_position['tvec'])
-			# target_position_publisher.publish(message)
-   
-			shortest_path_center_pixels, shortest_path, cur_pos_center_indexes = detect_obstacles_and_find_path(undistort_frame, image_with_pose, window, current_position, target_position)
-		
-		# cur_pos_center_indexes = obstacle_detector.convert_current_position_to_pixels(undistort_frame, window, current_position['center'])
+			shortest_path_center_pixels, shortest_path = detect_obstacles_and_find_path(undistort_frame, image_with_pose, current_position, target_position)
 		
 			if shortest_path:
-				navigate_robot(undistort_frame, shortest_path_center_pixels, shortest_path, cur_pos_center_indexes)
+				path_poses = estimate_path_poses(undistort_frame, shortest_path_center_pixels, shortest_path)
+				
+				for pose in path_poses:
+					target_position_publisher.publish(pose)
 
 	else:
 		rospy.loginfo('Waiting for current and target position')
 
-
-def publish_position(current_position, target_position):
-	if current_position:
-		message = generate_message(current_position['rvec'], current_position['tvec'])
-		current_position_publisher.publish(message)
-
-	if target_position:
-		message = generate_message(target_position['rvec'], target_position['tvec'])
-		target_position_publisher.publish(message)
-
-
-def detect_obstacles_and_find_path(undistort_frame, image_with_pose, window, current_position, target_position):
+def detect_obstacles_and_find_path(undistort_frame, image_with_pose, current_position, target_position):
 	obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes = obstacle_detector.generate_map(
-		undistort_frame, window, current_position['center'], target_position['center'])
+		undistort_frame, current_position['center'], target_position['center'])
 
 	shortest_path = path_planning.find_shortest_path(obstacles_map, cur_pos_center_indexes, 
 		goal_pos_center_indexes)
 
 	# We don't need the first and the last because we have markers 
-	shortest_path = shortest_path[:-1]
-	shortest_path_center_pixels = obstacle_detector.convert_center_to_pixels(image_with_pose, window, shortest_path)
+	shortest_path = shortest_path[1:]
+	shortest_path_center_pixels = obstacle_detector.convert_center_to_pixels(image_with_pose, shortest_path)
 
 	obstacle_detector.draw_map(image_with_pose, obstacles_map, 
-		window, shortest_path, cur_pos_center_indexes, goal_pos_center_indexes, imshow=True)
+		shortest_path, cur_pos_center_indexes, goal_pos_center_indexes, imshow=True)
 
-	return shortest_path_center_pixels, shortest_path, cur_pos_center_indexes
+	return shortest_path_center_pixels, shortest_path
 
 
-def navigate_robot(frame, shortest_path_center_pixels, shortest_path, cur_pos_center_indexes):
+def estimate_path_poses(frame, shortest_path_center_pixels, shortest_path):
 	if (shortest_path is None) or (shortest_path_center_pixels is None):
 		return
 
+	path_poses = []
 	for center in shortest_path_center_pixels:
 		corners = convert_center_to_corners(frame, center, ROBOT_SIZE_IN_PIXELS, imshow=False)
 		
@@ -197,10 +193,10 @@ def navigate_robot(frame, shortest_path_center_pixels, shortest_path, cur_pos_ce
 		# Draw Axis
 		cv2.aruco.drawAxis(frame, CAMERA_MATRIX, DISTORTION_COEF, rvec, tvec, 0.1)  
 
-		# rospy.loginfo(f'Robot position {cur_pos_center_indexes}, middlepoint position {center_indexes} Move to path index {i+1} out of {len(shortest_path)}')
 		message = generate_message(rvec, tvec)
-		target_position_publisher.publish(message)
-		cv2.imshow(f'Middlepoint pose', frame)
+		path_poses.append(message)
+	
+	return path_poses
 			
 def receive_image():   
 	# Node is subscribing to the video_frames topic
@@ -232,10 +228,7 @@ if __name__ == '__main__':
 	
 	obstacle_detector = ObstacleTracker(hsv_min, hsv_max, ROBOT_SIZE_IN_PIXELS)
 	
-	# We define the detection area [x_min, y_min, x_max, y_max] adimensional (0.0 to 1.0) starting from top left corner
-	window = None#[0.13, 0.05, 0.96, 0.80]#[0.13, 0.05, 0.96, 0.80]
-
-	current_position = target_position = shortest_path_center_pixels = cur_pos_center_indexes = goal_pos_center_indexes = obstacles_map = shortest_path = None
+	current_position = target_position = cur_pos_center_indexes = goal_pos_center_indexes = obstacles_map = shortest_path = None
 
 	current_position = dict(corners=None, center=None, rvec=None, tvec=None) 
 	target_position = dict(corners=None, center=None, rvec=None, tvec=None)
