@@ -225,8 +225,6 @@ def detect_obstacles_and_find_path(undistort_frame, image_with_pose, current_pos
 	obstacle_detector.draw_map(image_with_pose, obstacles_map, 
 		shortest_path, cur_pos_center_indexes, goal_pos_center_indexes, imshow=True)
 
-	print('shortest_path_center_pixels', type(shortest_path_center_pixels))
-	print('sho', type(shortest_path))
 	return shortest_path_center_pixels, shortest_path
 
 def estimate_path_poses(frame, shortest_path_center_pixels, shortest_path):
@@ -289,14 +287,14 @@ if __name__ == '__main__':
 	target_position = dict(corners=None, center=None, rvec=None, tvec=None)
 
 	# Receive image from camera
-	# receive_image()
+	receive_image()
 
 	# Debugging without camera
-	data = cv2.imread('/home/manos/Desktop/obstacles.png')
-	while not rospy.is_shutdown():
-		on_image_received(data)
-		#-- press q to quit
-		if cv2.waitKey(1) & 0xFF == ord('q'):
-			break
+	# data = cv2.imread('/home/manos/Desktop/obstacles.png')
+	# while not rospy.is_shutdown():
+	# 	on_image_received(data)
+	# 	#-- press q to quit
+	# 	if cv2.waitKey(1) & 0xFF == ord('q'):
+	# 		break
 
 	

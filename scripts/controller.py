@@ -80,9 +80,8 @@ class Controller:
         target_reached = False
 
         # Controller constants
-        k_rho = 0.2
-        k_alpha = 0.8
-        k_beta = 0.350
+        k_rho = 0.6
+        k_beta = 0.650
 
         while (not target_reached) and (not rospy.is_shutdown()):
             # Fix the initial angle 0.01
@@ -132,7 +131,7 @@ class Controller:
 
             # Fix the final angle
             self.beta = float("inf")
-            while (abs(self.beta) > 0.09) and (not rospy.is_shutdown()):
+            while (abs(self.beta) > 0.09) and (len(self.target_position_path)==0) and (not rospy.is_shutdown()):
                 k_beta = 0.950
                 
                 if (self.curr_homogenious_matrix is None) or (self.target_homogenious_matrix is None):
@@ -167,19 +166,21 @@ class Controller:
         twist = Twist()
 
         # Set maximum and minimum values of turtlebot burger
-        if v > 0.2:
-            twist.linear.x = 0.2
-        elif v < -0.2:
-            twist.linear.x = -0.2
-        else:
-            twist.linear.x = v
+        twist.linear.x = max(v, -0.2) if v < 0 else min(v, 0.2)
+        # if v > 0.2:
+        #     twist.linear.x = 0.2
+        # elif v < -0.2:
+        #     twist.linear.x = -0.2
+        # else:
+        #     twist.linear.x = v
 
-        if w > 2.84:
-            twist.angular.z = 2.84
-        elif w < -2.84:
-            twist.angular.z = -2.84
-        else:      
-            twist.angular.z = w 
+        # if w > 2.84:
+        #     twist.angular.z = 2.84
+        # elif w < -2.84:
+        #     twist.angular.z = -2.84
+        # else:      
+        #     twist.angular.z = w 
+        twist.angular.z = max(w, -2.84) if w < 0 else min(w, 2.84)
         
         # Publish velocity to robot
         try:
