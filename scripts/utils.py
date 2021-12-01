@@ -36,6 +36,7 @@ def convert_corners_to_center(corners):
 	y = int((top_left[1] + bt_right[1]) / 2.0)
 	return (x, y)
 
+
 def get_calibration_data(calibration_file):
 	with open(calibration_file, "r") as data:
 		try:

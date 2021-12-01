@@ -124,33 +124,6 @@ class ObstacleTracker(object):
         # rospy.loginfo('Drawing map completed')
         return(image)
 
-    def get_relative_position(self, image, keyPoint):
-        """
-        Obtain the camera relative frame coordinate of one single keypoint
-        return(x,y)
-        """
-        rows = float(image.shape[0])
-        cols = float(image.shape[1])
-        
-        center_x    = 0.5*cols
-        center_y    = 0.5*rows
-
-        x = (keyPoint[0] - center_x)/(center_x)
-        y = (keyPoint[1] - center_y)/(center_y)
-        
-        return y,x
-
-    def get_absolute_position(self, image, keyPoint):
-        """
-        Obtain the camera relative frame coordinate of one single keypoint
-        return(x,y)
-        """
-        x = int(keyPoint[0])
-        y = int(keyPoint[1])
-        size = int((keyPoint.size/2))
-        
-        return x, y, size
-    
     def generate_map(self, image, cur_pos_center, goal_pos_center):
         # rospy.loginfo('Detecting obstacles started')
 
@@ -205,36 +178,3 @@ class ObstacleTracker(object):
 
         return True if 255 in output else False
 
-        
-if __name__=="__main__":
-
-    rospy.init_node("obstacle_detector_node", log_level=rospy.DEBUG)
-    cv_image = cv2.imread('/home/manos/Desktop/bright_obstacles.png') 
-
-
-    # HSV limits for RED Haro
-    hsv_min = (0, 100, 0)
-    hsv_max = (5, 255, 255) 
-
-    obstacle_detector = ObstacleTracker(hsv_min, hsv_max)
-
-    obstacles_map, rows, cols = obstacle_detector.generate_map(cv_image)
-
-    start_index = (4,6)#50
-    goal_index = (0,0)#4
-    
-    shortest_path = path_planning.find_shortest_path(obstacles_map, start_index, goal_index)
-    # shortest_path = np.array(shortest_path).T
-    # for pos in shortest_path:
-    #     print(obstacle_detector.get_relative_position(cv_image, pos))
-    
-    while not rospy.is_shutdown():
-        obstacle_detector.draw_map(cv_image, obstacles_map, shortest_path=shortest_path, start_index=start_index, goal_index=goal_index, imshow=True)
-
-        #-- press q to quit
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-    
-
-    rospy.logwarn("Shutting down")    
-    cv2.destroyAllWindows()
