@@ -38,28 +38,24 @@ def estimate_current_target_pose(frame,
 	"""Find all the Aruco markers in the picure and estimate their position.
 
 	:param frame: Frame from the video stream
-	:type frame: ndarray
+	:type frame: numpy.ndarray
 	:param current_id: ID of the marker placed in the initial position, defaults to CURRENT_ID
 	:type current_id: int, optional
 	:param target_id: ID of the marker placed in the target position, defaults to TARGET_ID
 	:type target_id: int, optional
 	:param aruco_dict_type: Aruco dictionary type, defaults to cv2.aruco.DICT_ARUCO_ORIGINAL
-	:type aruco_dict_type: dict, optional
+	:type aruco_dict_type: [type], optional
 	:param matrix_coefficients: Intrinsic matrix of the calibrated camera, defaults to CAMERA_MATRIX
-	:type matrix_coefficients: dict, optional
+	:type matrix_coefficients: [type], optional
 	:param distortion_coefficients: Distortion coefficients associated with your camera, defaults to DISTORTION_COEF
-	:type distortion_coefficients: dict, optional
+	:type distortion_coefficients: [type], optional
 	:param imshow: Show the image or not?, defaults to True
 	:type imshow: bool, optional
 	
  	:return: The frame with the axis drawn on it
-	:rtype: ndarray
-	:return: Current robot position
-	:rtype: dict
- 	:return: Target robot position
-	:rtype: dict
+	:rtype: [type]
 	"""
-	
+ 
 	frame = frame.copy()
 	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 	cv2.aruco_dict = cv2.aruco.Dictionary_get(aruco_dict_type)
@@ -107,16 +103,8 @@ def estimate_current_target_pose(frame,
 
 	return frame, current_position, target_position
 
-def preprocess_image(data):
-	"""
- 	Preprocess the input image by converting it to numpy array, then undistort the frame
-	using the calibration data
 
-	:param data: Input image frame
-	:type data: ndarray
-	:return: Undistorted frame
-	:rtype: ndarray
-	"""
+def preprocess_image(data):
 	# Used to convert between ROS and OpenCV images
 	br = CvBridge()
  
@@ -137,16 +125,8 @@ def preprocess_image(data):
 
 	return undistort_frame
 
-def generate_message(rvec: list, tvec: list) -> Pose_estimation_vectors:
-	"""Convert rotational and translational vector to a message of type Pose_estimation_vectors
 
-	:param rvec: Rotational vector
-	:type rvec: list
-	:param tvec: Translational vector
-	:type tvec: list
-	:return: Converted message
-	:rtype: Pose_estimation_vectors
-	"""
+def generate_message(rvec: list, tvec: list) -> Pose_estimation_vectors:
 	message = Pose_estimation_vectors()
 	if (rvec is not None) and (tvec is not None):
 		message.rotational.x, message.rotational.y, message.rotational.z  = rvec[0][0][0], rvec[0][0][1], rvec[0][0][2]
@@ -154,15 +134,8 @@ def generate_message(rvec: list, tvec: list) -> Pose_estimation_vectors:
 
 	return message
 	
-def on_image_received(data):
-	"""Preprocess and undistort the image, estimate poses of the current and target position 
- 	and publish them, then detect red obstacles, then find the shortest path between the 
-  	current and target, and finally publish the middlepoints.  
 
-	:param data: Image frame
-	:type data: ndarray
-	"""
-     
+def on_image_received(data): 
 	global shortest_path
 
 	# Convert ROS Image message to OpenCV image
@@ -192,26 +165,8 @@ def on_image_received(data):
 	else:
 		rospy.loginfo('Waiting for current and target position')
 
-def detect_obstacles_and_find_path(undistort_frame, image_with_pose, current_position, target_position):
-	"""Generate a map of the red obstacles using the obstacle detector and feed the map
-	to the path planning algorithm to receive the shortest path. Skip the first and the last 
-	steps of the path because we have the markers for those. Then we need to convert those middlepoints
-	from array indexes to pixels in order to draw the map.
 
-	:param undistort_frame: Undistorted frame
-	:type undistort_frame: ndarray
-	:param image_with_pose: Frame with poses
-	:type image_with_pose: ndarray
-	:param current_position: Current position
-	:type current_position: dict
-	:param target_position: Target position
-	:type target_position: dict
- 
-	:return: Shortest path pixels
-	:rtype: list
-	:return: Shortest path indexes
-	:rtype: list
-	"""
+def detect_obstacles_and_find_path(undistort_frame, image_with_pose, current_position, target_position):
 	obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes = obstacle_detector.generate_map(
 		undistort_frame, current_position['center'], target_position['center'])
 
@@ -225,9 +180,8 @@ def detect_obstacles_and_find_path(undistort_frame, image_with_pose, current_pos
 	obstacle_detector.draw_map(image_with_pose, obstacles_map, 
 		shortest_path, cur_pos_center_indexes, goal_pos_center_indexes, imshow=True)
 
-	print('shortest_path_center_pixels', type(shortest_path_center_pixels))
-	print('sho', type(shortest_path))
 	return shortest_path_center_pixels, shortest_path
+
 
 def estimate_path_poses(frame, shortest_path_center_pixels, shortest_path):
 	if (shortest_path is None) or (shortest_path_center_pixels is None):
@@ -252,6 +206,7 @@ def estimate_path_poses(frame, shortest_path_center_pixels, shortest_path):
 	
 	return path_poses
 			
+   
 def receive_image():   
 	# Node is subscribing to the video_frames topic
 	camera = rospy.get_param('camera')
@@ -268,35 +223,32 @@ if __name__ == '__main__':
 	# Tells rospy the name of the node.
 	# Anonymous = True makes sure the node has a unique name. Random
 	# numbers are added to the end of the name. 
+	# node_name = rospy.get_param('estimate_pose_node')
 	rospy.init_node('estimate_pose', anonymous=True)
 
-	# Position publishers 
+	# topic_name = rospy.get_param('object_position')
+	# print(topic_name)
 	current_position_publisher = rospy.Publisher('current_position', Pose_estimation_vectors, queue_size=10)
 	target_position_publisher = rospy.Publisher('target_position', Pose_estimation_vectors, queue_size=10)
 
-	# HSV limits for RED color
+	# HSV limits for RED Haro
 	hsv_min = (0, 100, 0)
 	hsv_max = (5, 255, 255)  
 	
-	# Initialize obstacle detector
 	obstacle_detector = ObstacleTracker(hsv_min, hsv_max, ROBOT_SIZE_IN_PIXELS)
 	
-	# Initialize the shortest path
-	shortest_path = None
+	current_position = target_position = cur_pos_center_indexes = goal_pos_center_indexes = obstacles_map = shortest_path = None
 
-	# Initialize current and targe position dictionary
 	current_position = dict(corners=None, center=None, rvec=None, tvec=None) 
 	target_position = dict(corners=None, center=None, rvec=None, tvec=None)
 
-	# Receive image from camera
-	# receive_image()
+	receive_image()
 
-	# Debugging without camera
-	data = cv2.imread('/home/manos/Desktop/obstacles.png')
-	while not rospy.is_shutdown():
-		on_image_received(data)
-		#-- press q to quit
-		if cv2.waitKey(1) & 0xFF == ord('q'):
-			break
+	# data = cv2.imread('/home/manos/Desktop/obstacles.png')
+	# while not rospy.is_shutdown():
+	# 	on_image_received(data)
+	# 	#-- press q to quit
+	# 	if cv2.waitKey(1) & 0xFF == ord('q'):
+	# 		break
 
 	

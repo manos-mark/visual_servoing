@@ -13,8 +13,11 @@ from visual_servoing.msg import Pose_estimation_vectors
 
 class Controller:
     def __init__(self):
+        rospy.init_node('robot_controller')
+        self.velocity_publisher = rospy.Publisher('cmd_vel', Twist, queue_size=1)
         rospy.Subscriber('current_position', Pose_estimation_vectors, self.set_current_pos)
         rospy.Subscriber('target_position', Pose_estimation_vectors, self.update_target_position_path)
+        
         self.current_time = 0
         self.target_homogenious_matrix = None
         self.curr_homogenious_matrix = None
@@ -38,6 +41,8 @@ class Controller:
                 rospy.loginfo(f'Robot is moving to target with index {i}!')
                 self.move_robot()
                 i += 1
+        
+        rospy.spin()
         
     def update_target_position_path(self, data):
         self.target_position_path.append(data)
@@ -67,59 +72,6 @@ class Controller:
         self.rho = float('inf')
         self.alpha = float("inf")
         self.beta = float('inf')
-
-    def move_robot_old(self):
-        target_position_data = self.target_position_path.pop(0)
-        self.set_target_pos(target_position_data)
-
-        k_rho = 1.3 # 0.3 (k_rho > 0)
-        k_alpha = 1.4 # 0.8 (k_alpha - k_rho > 0)
-        k_beta = -1.15 # -0.15 (k_beta < 0)
-        constant_vel = 0.2
-
-        while (self.rho>=0.08) and (not rospy.is_shutdown()):
-
-            if self.theta_target is None:
-                continue
-            # thetag = math.radians(self.theta_target)
-            thetag = self.theta_target
-
-            if self.theta_current is None:
-                continue
-            # theta = math.radians(self.theta_current)
-            theta = self.theta_current
-            
-            if (self.curr_homogenious_matrix is None) or (self.target_homogenious_matrix is None):
-                continue
-
-            # print('\n cur_theta: ', theta, '\t\t target_theta: ', thetag)
-
-            t = np.matmul(np.linalg.inv(self.curr_homogenious_matrix), self.target_homogenious_matrix)
-            dx = t[0][3]
-            dy = t[1][3]
-
-            self.rho = math.sqrt(math.pow(dy, 2) + math.pow(dx, 2))
-            self.alpha = normalize(np.arctan2(dy, dx) - theta)
-            self.beta = normalize(thetag - np.arctan2(dy, dx))
-            
-            v = k_rho * self.rho
-            w = k_alpha * self.alpha + k_beta * self.beta
-            # print(f'\ntheta: {math.degrees(theta)}, rho: {self.rho}. alpha: {math.degrees(self.alpha)} beta: {math.degrees(self.beta)}')
-
-            if constant_vel:
-                abs_v = abs(v)
-                v = v / abs_v * constant_vel
-                w = w / abs_v * constant_vel
-            # print(f'v:{v} \t w:{w}')
-
-            self.send_velocity_to_robot(v,w)
-            
-            rospy.sleep(0.01)
-            
-        if self.rho < 0.08:
-            rospy.loginfo('Target reached!')
-            
-        self.stop_robot()
 
     def move_robot(self):
         target_position_data = self.target_position_path.pop(0)
@@ -231,7 +183,7 @@ class Controller:
         
         # Publish velocity to robot
         try:
-            pub.publish(twist)
+            self.velocity_publisher.publish(twist)
         except:
             print('Publisher is closed')
 
@@ -245,16 +197,14 @@ class Controller:
         twist = Twist()
         twist.linear.x = 0
         twist.angular.z = 0
-        pub.publish(twist) 
+        self.velocity_publisher.publish(twist) 
 
         # rospy.sleep(10)
         # self.move_robot()   
 
-def normalize(angle):
-    return np.arctan2(np.sin(angle),np.cos(angle))
-        
+
 if __name__ == '__main__':
-    pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
-    rospy.init_node('robot_controller')
+#     pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
+#     rospy.init_node('robot_controller')
     controller = Controller()
-    rospy.spin()
+#     rospy.spin()
