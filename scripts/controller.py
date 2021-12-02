@@ -23,8 +23,6 @@ class Controller:
         self.current_time = 0
         self.target_homogenious_matrix = None
         self.curr_homogenious_matrix = None
-        self.theta_current = None
-        self.theta_target = None
         self.rho = float("inf")
         self.alpha = float("inf")
         self.beta = float("inf")
@@ -67,9 +65,6 @@ class Controller:
         homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
         self.curr_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
         
-        r = R.from_matrix(rotational_matrix)
-        self.theta_current = r.as_euler('XYZ', degrees=False)[2]
-        
     def set_target_pos(self, data: Pose_estimation_vectors):
         """Calculate the rotational matrix from the rotational vector and apply some transformations
         to get the homogenious matrix and set it as the target position. Furthermore we calculate
@@ -83,9 +78,6 @@ class Controller:
         translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
         homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
         self.target_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
-        
-        r = R.from_matrix(rotational_matrix)
-        self.theta_target = r.as_euler('XYZ', degrees=False)[2]
         
         self.rho = float('inf')
         self.alpha = float("inf")
