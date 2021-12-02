@@ -34,6 +34,9 @@ The structure of this message is the following:
 `geometry_msgs/Vector3 rotational`  
 `geometry_msgs/Vector3 translational`
 
+Here is the image with both of the poses:
+![Poses](images/poses.png)
+
 ## 5. Controller - Convert rotational and translational matrices to homogenious matrices
 The [controller module](https://github.com/manoskout/visual_servoing/blob/master/scripts/controller.py) have to convert the rotational vector into rotational matrix using the Rodrigues transformation with the OpenCV function:   
 ` rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))`.  
@@ -65,10 +68,12 @@ The [obstacle detection module](https://github.com/manoskout/visual_servoing/blo
 
 Then we iterate for every box of the image and convert the box to HSV. Next we mask the image if the box contains any pixels in the range of red color, and apply the bitwise mask to the output. If the box contains red pixels we assume that it is an obstacle.
 
+The output of this step is an one directional array with lenght equals to the number of the boxes wich contains zero's (when there is no obstacle) and one's (where there is an obstacle).
+
 ![Obstacles](images/obstacles.png)
 
 ## 3. Find shortest path using A-star Algorithm
-We use the [Path planning module](https://github.com/manoskout/visual_servoing/blob/master/scripts/path_planning.py) to receive the shortest path the robot should move to go into the target faster. 
+Using the obstacles map array of the previous step we implement the [Path planning module](https://github.com/manoskout/visual_servoing/blob/master/scripts/path_planning.py) to receive the shortest path the robot should move to go into the target faster. 
 
 This is a graph based algorithm which is using an heuristic method for better performance. The core of this is f = g + h, where:
 - F is the total cost  
@@ -77,7 +82,19 @@ This is a graph based algorithm which is using an heuristic method for better pe
 
 Read the following [article](https://medium.com/@nicholas.w.swift/easy-a-star-pathfinding-7e6689c7f7b2) for more informations.
 
-## 4. Draw shortest path and obstacles
+## 4. Middle-point pose
+Shortest path contains some middlepoints that the robot should move to find the target position faster without any collision with the obstacles. 
+
+Here, we face a problem because we only have the indexes of those middlepoints. So, we decided to convert those indexes to pixels according to our boxed frame. Using their corners we calculate their poses the same way we calculate the pose for the aruco markers with the function: `cv2.aruco.estimatePoseSingleMarkers`.   
+
+![Middlepoints](images/midlepoint_poses.png)
+
+## 4. Draw shortest path
+Then, we itterate throught the obstacles map and draw on the image each middle point of the shortest path we calculated in the previous steps.
+
+This is the final map, where blue zeros specify that there is a valid movement for the robot, light blue X specify there is an obstacle, orange circles specify the shortest path, bold white S and G specify the starting and goal point of the path respectively.
+![Final_map](images/final_map.png)
+
 ## 5. Move on each middle point
 
 # Third Objective - Parking
