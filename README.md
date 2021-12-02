@@ -96,6 +96,12 @@ This is the final map, where blue zeros specify that there is a valid movement f
 ![Final_map](images/final_map.png)
 
 ## 5. Move on each middle point
+Our controller receives the current pose vectors each time the `on_receive_image` callback is executed. It calculates the homogenious matrix as explaind earlier and save it as class variable `self.current_homogenious_matrix`.
+
+For each middle point the controller receives the same vectors and update the list `target_position_path` class variable. When this list has no values the robot is not moving, as it doesn't know where to go. When it receive some values it calculate the homogenious matrix for this specific middlepoint and save it as the class variable `self.target_homogenious_matrix`.  
+
+The robot is able to move now on every midlepoint specified in the `target_position_path` list by fixing the angle and then moving to the middlepoint. When the robot is approaching the middlepoint and the distance error is small we get the next element (midlepoint) of the list and continue moving until the list is empty!
+
 
 # Third Objective - Parking
 ## 1. Calculate Euler angle
