@@ -34,7 +34,7 @@ The structure of this message is the following:
 `geometry_msgs/Vector3 rotational`  
 `geometry_msgs/Vector3 translational`
 
-Here is the image with both of the poses:
+Here is the image with both of the poses:  
 ![Poses](images/poses.png)
 
 ## 5. Controller - Convert rotational and translational matrices to homogenious matrices
@@ -92,7 +92,7 @@ Here, we face a problem because we only have the indexes of those middlepoints. 
 ## 4. Draw shortest path
 Then, we itterate throught the obstacles map and draw on the image each middle point of the shortest path we calculated in the previous steps.
 
-This is the final map, where blue zeros specify that there is a valid movement for the robot, light blue X specify there is an obstacle, orange circles specify the shortest path, bold white S and G specify the starting and goal point of the path respectively.
+This is the final map, where blue zeros specify that there is a valid movement for the robot, light blue X specify there is an obstacle, orange circles specify the shortest path, bold white S and G specify the starting and goal point of the path respectively.  
 ![Final_map](images/final_map.png)
 
 ## 5. Move on each middle point
