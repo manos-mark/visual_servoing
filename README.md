@@ -105,4 +105,35 @@ The robot is able to move now on every midlepoint specified in the `target_posit
 
 # Third Objective - Parking
 ## 1. Calculate Euler angle
+On the controller `move_robot` there are two loops for the implementation of the previous steps (fix angle, move forward). For the purposes of parking we need to add another loop that will be executed only when the robot is on the target position, and the objective of this loop is to fix the final angle in respect with the specified target pose.
+
+The additinal code we need is simple:  
+`rotational_matrix = np.array([
+                                [t[0][0], t[0][1], t[0][2]],
+                                [t[1][0], t[1][1], t[1][2]],
+                                [t[2][0], t[2][1], t[2][2]],
+                            ])`
+                
+`r = R.from_matrix(rotational_matrix)`  
+`self.beta = r.as_euler('XYZ', degrees=False)[2]`
+
+We convert the rotational matrix to Euler angles, we receive a vector [x,y,z] and get the third value because we only need the z angle, which we save as the class variable beta.
+
 ## 2. Move the robot to fix the angle error
+Finally, we publish the desired angular velocity and the robot fix the beta angle!
+
+# Demo 
+Execute Roscore: 
+>`roscore`
+
+Launch the camera
+>`roslaunch ueye_cam rgb8.launch`
+
+Remote monitor and control, for more details [click here](http://wiki.ros.org/robotican/Tutorials/Remote%20monitoring%20and%20control):
+>`ssh ubuntu@192.168.0.200`
+
+On the turtlebot run, for more details [click here](https://emanual.robotis.com/docs/en/platform/turtlebot3/bringup/):
+>`roslaunch turtlebot3_bringup turtlebot3_robot.launch`
+
+On the remote computer launch our implementation:
+>`roslaunch visual_servoing visual_servoing.launch`
