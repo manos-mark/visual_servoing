@@ -11,15 +11,15 @@ Following on this report we will analyse the mathematical theoritical background
 The Robot Operating System (ROS) is an open source middleware which contains a set of libraries,softwares and tools that are used to facilitate the development of robotic applications. There is a plethora of features from sensor drivers to state-of-the-art algorithms. As middleware, it contains characteristics of both software and hardware, hencee, it is able to perform various actions like hardware abstraction and low level control.
 Until now, different version of ROS exists with some crusial differences, so for compatibility reasons we are using the Melodic release.
 
-## Robot used for the scenario
+## Robot used for this scenario
 ### Turtlebot Description
 For the project, the mobile robot used is a Turtlebot3 Burger. The Turtlebot3 is a compact, modular and programmable mobile robot. It uses ROS and it is able to create multiple application for training research and development.
 
-# First Objective - Move from current to target
+# First Objective - Move from current to target position
 
 ## 1. Camera Calibraton 
-This is a crusial step for the fisheye camera which is integrated to Turtlebot3. The implementation uses the [camera_calibration](http://wiki.ros.org/camera_calibration) package from ROS. This packages uses OpenCV camera calibration, fully described [here](https://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html). For this step we only have to use the checkerboard in order to get all the related coefficients for the undistortion.
-![Checkerboard](img/checkerboard.jpg)
+This is a crusial step for the fisheye camera which is integrated to Turtlebot3. The implementation uses the [camera_calibration](http://wiki.ros.org/camera_calibration) package from ROS. This packages uses OpenCV camera calibration, fully described [here](https://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html). For this step we only have to use the checkerboard in order to get all the related coefficients for the undistortion.  
+![Checkerboard](https://us.123rf.com/450wm/vectora/vectora1909/vectora190904441/131156441-checkered-chequered-seamless-pattern-squares-seamless-pattern-texture-checkerboard-chess-board.jpg?ver=6)
 
 ## 2. Receive image
 The next step is to receive image frames by subscribing to the ROS topic "/camera/image_raw" and convert it to numpy array. Then we need to crop the image according to our needs, by specifing the window that we need to work on. Afterwards we undistord the received image using the camera matrix and the distortion coefficients received on the previous step.
@@ -28,14 +28,14 @@ The next step is to receive image frames by subscribing to the ROS topic "/camer
 Using the OpenCV library we can detect two Aruco markers that are placed on the top of the robot, one marker for the current and one for the target position. We only have to call the function `cv2.detectMarkers` from wich we receive the corners of each marker and we can move on to the pose estimation.
 
 ## 4. Pose estimation
- Next step is to estimate the current and target poses, simple by calling the function `cv2.estimatePoseSingleMarkers`. From which we receive two vectors for each marker, one translational vector [x, y, z] and one rotational vector [x, y, z]. Using the ROS publisher we sent those vectors to the robot controller, who is responsible to translate those matrices in a way that the robot should be able to move. This is implemented with the ROS publisher `rospy.Publisher('current_position', Pose_estimation_vectors, queue_size=10)`, where the *current_position* is the ROS topic that the controller will subscribe to fetch the custom message *Pose_estimation_vectors* tha we created, in order to send those vectors.
+ Next step is to estimate the current and target poses, simple by calling the function `cv2.estimatePoseSingleMarkers` in the [pose estimation module](https://github.com/manoskout/visual_servoing/blob/master/scripts/pose_estimation.py). From which we receive two vectors for each marker, one translational vector [x, y, z] and one rotational vector [x, y, z]. Using the ROS publisher we sent those vectors to the robot controller, who is responsible to translate those matrices in a way that the robot should be able to move. This is implemented with the ROS publisher `rospy.Publisher('current_position', Pose_estimation_vectors, queue_size=10)`, where the *current_position* is the ROS topic that the controller will subscribe to fetch the custom message *Pose_estimation_vectors* tha we created, in order to send those vectors.
 
 The structure of this message is the following:          
 `geometry_msgs/Vector3 rotational`  
 `geometry_msgs/Vector3 translational`
 
 ## 5. Controller - Convert rotational and translational matrices to homogenious matrices
-The controller have to convert the rotational vector into rotational matrix using the Rodrigues transformation with the OpenCV function:   
+The [controller module](https://github.com/manoskout/visual_servoing/blob/master/scripts/controller.py) have to convert the rotational vector into rotational matrix using the Rodrigues transformation with the OpenCV function:   
 ` rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))`.  
 
 Then we stack the rotational matrix horizontally with the transformational vector and append at the end the row *[0, 0, 0, 1]* in order to receive the homogenious matrix. 
@@ -61,8 +61,22 @@ Now we fix the beta angle by publishing to the ROS topic `cmd_vel` only angular 
 
 # Second Objective - Avoid obstacles
 ## 1. Obstacle detection
-## 2. Generate obstacle map
+The [obstacle detection module](https://github.com/manoskout/visual_servoing/blob/master/scripts/obstacle_detection.py) is using the input image and slice it into boxes of size equal to the robot size. This way we have an array with all the possible moves that the robot can achive. To distinguish the obstacles, that mean if there is an obstacle -a red box- in the image the robot should not be able to move there. 
+
+Then we iterate for every box of the image and convert the box to HSV. Next we mask the image if the box contains any pixels in the range of red color, and apply the bitwise mask to the output. If the box contains red pixels we assume that it is an obstacle.
+
+![Obstacles](images/obstacles.png)
+
 ## 3. Find shortest path using A-star Algorithm
+We use the [Path planning module](https://github.com/manoskout/visual_servoing/blob/master/scripts/path_planning.py) to receive the shortest path the robot should move to go into the target faster. 
+
+This is a graph based algorithm which is using an heuristic method for better performance. The core of this is f = g + h, where:
+- F is the total cost  
+- G is the distance between the current node and the start node.  
+- H is the heuristic — estimated distance from the current node to the end node.
+
+Read the following [article](https://medium.com/@nicholas.w.swift/easy-a-star-pathfinding-7e6689c7f7b2) for more informations.
+
 ## 4. Draw shortest path and obstacles
 ## 5. Move on each middle point
 
