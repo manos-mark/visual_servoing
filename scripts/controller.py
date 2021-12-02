@@ -12,6 +12,8 @@ from numpy.lib.function_base import _calculate_shapes
 from visual_servoing.msg import Pose_estimation_vectors
 
 class Controller:
+    """Robot controller class using current and target homogenious matrices
+    """
     def __init__(self):
         rospy.init_node('robot_controller')
         self.velocity_publisher = rospy.Publisher('cmd_vel', Twist, queue_size=1)
@@ -45,22 +47,38 @@ class Controller:
         rospy.spin()
         
     def update_target_position_path(self, data):
+        """Update the target position path for each middlepoint
+
+        :param data: Rotational and translational vectors
+        :type data: Pose_estimation_vectors
+        """
         self.target_position_path.append(data)
 
     def set_current_pos(self, data: Pose_estimation_vectors):
-        # if self.curr_homogenious_matrix is None:
+        """Calculate the rotational matrix from the rotational vector and apply some transformations
+        to get the homogenious matrix and set it as the current position. Furthermore we calculate
+        theta using Euler angles.
+
+        :param data: Rotational and translational vectors
+        :type data: Pose_estimation_vectors
+        """
         rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))
         translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
         homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
         self.curr_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
-        # print('\n Current Homogemeous: \n',self.curr_homogenious_matrix)
         
         r = R.from_matrix(rotational_matrix)
         self.theta_current = r.as_euler('XYZ', degrees=False)[2]
-        # print('theta_current: ', math.degrees(self.theta_current))
         
     def set_target_pos(self, data: Pose_estimation_vectors):
-        # if self.target_homogenious_matrix is None:
+        """Calculate the rotational matrix from the rotational vector and apply some transformations
+        to get the homogenious matrix and set it as the target position. Furthermore we calculate
+        theta using Euler angles.
+
+        :param data: Rotational and translational vectors
+        :type data: Pose_estimation_vectors
+        """
+        
         rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))
         translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
         homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
@@ -74,6 +92,9 @@ class Controller:
         self.beta = float('inf')
 
     def move_robot(self):
+        """Fix the angle of the current position according to the next position,
+        then move the robot to it, and finally perform parking.
+        """
         target_position_data = self.target_position_path.pop(0)
         self.set_target_pos(target_position_data) 
         
@@ -163,23 +184,17 @@ class Controller:
                 break
 
     def send_velocity_to_robot(self, v, w):
-        twist = Twist()
+        """Publish angular and linear velocities to the robot, 
+        but first apply some speed limitations.
 
+        :param v: Linear velocity
+        :type v: float
+        :param w: Angular velocity
+        :type w: float
+        """
+        twist = Twist()
         # Set maximum and minimum values of turtlebot burger
         twist.linear.x = max(v, -0.2) if v < 0 else min(v, 0.2)
-        # if v > 0.2:
-        #     twist.linear.x = 0.2
-        # elif v < -0.2:
-        #     twist.linear.x = -0.2
-        # else:
-        #     twist.linear.x = v
-
-        # if w > 2.84:
-        #     twist.angular.z = 2.84
-        # elif w < -2.84:
-        #     twist.angular.z = -2.84
-        # else:      
-        #     twist.angular.z = w 
         twist.angular.z = max(w, -2.84) if w < 0 else min(w, 2.84)
         
         # Publish velocity to robot
@@ -200,12 +215,6 @@ class Controller:
         twist.angular.z = 0
         self.velocity_publisher.publish(twist) 
 
-        # rospy.sleep(10)
-        # self.move_robot()   
-
 
 if __name__ == '__main__':
-#     pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
-#     rospy.init_node('robot_controller')
     controller = Controller()
-#     rospy.spin()

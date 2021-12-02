@@ -228,6 +228,18 @@ def detect_obstacles_and_find_path(undistort_frame, image_with_pose, current_pos
 	return shortest_path_center_pixels, shortest_path
 
 def estimate_path_poses(frame, shortest_path_center_pixels, shortest_path):
+	"""Estimate pose for each middle point, using the center we find the corners of it
+	and then we feed it to cv2.aruco.estimatePoseSingleMarkers.
+
+	:param frame: Input image frame
+	:type frame: ndarray
+	:param shortest_path_center_pixels: Shorter path center pixels of each middle point
+	:type shortest_path_center_pixels: list
+	:param shortest_path: Shorter path center indexes of each middle point
+	:type shortest_path: list
+	:return: A list of generated poses
+	:rtype: list
+	"""
 	if (shortest_path is None) or (shortest_path_center_pixels is None):
 		return
 
@@ -251,6 +263,9 @@ def estimate_path_poses(frame, shortest_path_center_pixels, shortest_path):
 	return path_poses
 			
 def receive_image():   
+	"""Receive image from the camera topic using a subscriber 
+ 	and call the callback function on_image_received
+	"""
 	# Node is subscribing to the video_frames topic
 	camera = rospy.get_param('camera')
 	rospy.Subscriber(camera, Image, on_image_received)

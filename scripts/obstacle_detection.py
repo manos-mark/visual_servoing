@@ -10,6 +10,8 @@ import path_planning
 
 
 class ObstacleTracker(object):
+    """Obstacle tracker class
+    """
 
     def __init__(self, hsv_min, hsv_max, robot_size_in_pixels):
         self.hsv_min = hsv_min
@@ -17,6 +19,15 @@ class ObstacleTracker(object):
         self.offset = robot_size_in_pixels
 
     def convert_center_to_pixels(self, image, shortest_path):
+        """Convert every middle point of the path from indexes to pixels
+
+        :param image: Input image
+        :type image: ndarray
+        :param shortest_path: Shortest path indexes
+        :type shortest_path: list
+        :return: Shortest path pixels
+        :rtype: list
+        """
         if shortest_path is None:
             return
 
@@ -50,12 +61,22 @@ class ObstacleTracker(object):
                     shortest_path=None,
                     start_index=None, 
                     goal_index=None,
-                    color=(255,0,0),    #- line's color
                     line=1,             #- line's thickness
                     imshow=False        #- show the image
                 ):
-        
-        # rospy.loginfo('Drawing map started')
+        """Draw the map with obstacles and shortest path
+
+        :param image: Input image
+        :type image: ndarray
+        :param obstacles_map: Obstacles map
+        :type obstacles_map: list
+        :param shortest_path: Shortest path, defaults to None
+        :type shortest_path: list, optional
+        :param start_index: Start index, defaults to None
+        :type start_index: tuple, optional
+        :param goal_index: Goal index, defaults to None
+        :type goal_index: tuple, optional
+        """
 
         obstacles_map = np.array(obstacles_map).T
         obstacles_map = obstacles_map.tolist()
@@ -125,6 +146,23 @@ class ObstacleTracker(object):
         return(image)
 
     def generate_map(self, image, cur_pos_center, goal_pos_center):
+        """Getting the current and target position pixels, generate a map of obstacles
+        and return the map and the corresponding indexes of the current and target points.
+
+        :param image: Input image
+        :type image: ndarray
+        :param cur_pos_center: Current position center pixels
+        :type cur_pos_center: tuple
+        :param goal_pos_center: Target position center pixels
+        :type goal_pos_center: tuple
+
+        :return obstacles_map: Obstacles map 
+        :rtype obstacles_map: list
+        :return cur_pos_center_indexes: Current position center indexes
+        :rtype cur_pos_center_indexes: tuple
+        :return goal_pos_center_indexes: Target position center indexes
+        :rtype goal_pos_center_indexes: tuple
+        """
         # rospy.loginfo('Detecting obstacles started')
 
         obstacles_map = []
@@ -164,11 +202,17 @@ class ObstacleTracker(object):
 
             obstacles_map.append(row_list)
 
-        # rospy.loginfo('Detecting obstacles completed')
-        
         return obstacles_map, cur_pos_center_indexes, goal_pos_center_indexes
 
     def does_image_contain_obstacles(self, image):
+        """Check if image contain obstacles, by obstacle we describe every pixel 
+        with a specific color, in this case is RED
+
+        :param image: Input image
+        :type image: ndarray
+        :return: True if image contains obstacle otherwise False
+        :rtype: bool
+        """
         image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         lower = self.hsv_min#np.array([0,0,245]) # b,g,r values
         upper = self.hsv_max#np.array([20,20,255]) # b,g,r values

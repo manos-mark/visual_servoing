@@ -4,6 +4,19 @@ import numpy as np
 
 
 def convert_center_to_corners(frame, center, offset=15, imshow=False):
+	"""Convert center to corners
+
+	:param frame: Input image
+	:type frame: ndarray
+	:param center: Center point 
+	:type center: tuple
+	:param offset: Size of the robot in centimeters, defaults to 15
+	:type offset: int, optional
+	:param imshow: Show the image?, defaults to False
+	:type imshow: bool, optional
+	:return: Corners points
+	:rtype: ndarray
+	"""
 	top_left = np.array([(center[0]-offset), (center[1]-offset)], dtype=np.int)
 	bt_left = np.array([(center[0]-offset), (center[1]+offset)], dtype=np.int)
 	top_right = np.array([(center[0]+offset), (center[1]-offset)], dtype=np.int)
@@ -22,6 +35,13 @@ def convert_center_to_corners(frame, center, offset=15, imshow=False):
 
 
 def convert_corners_to_center(corners):
+	"""Convert corners to center
+
+	:param corners: Corners points
+	:type corners: ndarray
+	:return: Center point
+	:rtype: tuple
+	"""
 	if corners is None:
 		return None
 
@@ -38,6 +58,20 @@ def convert_corners_to_center(corners):
 
 
 def get_calibration_data(calibration_file):
+	"""Get as input the path of the file that contains the calibration data
+	and read them 
+
+	:param calibration_file: Calibration file's path
+	:type calibration_file: string
+	:return: Height
+	:rtype: float
+ 	:return: Width
+	:rtype: float
+	:return: Calibration matrix
+	:rtype: ndarrat
+ 	:return: Distortion coefficients 
+	:rtype: ndarray
+	"""
 	with open(calibration_file, "r") as data:
 		try:
 			calibration_data = yaml.safe_load(data)

@@ -16,7 +16,15 @@ class Node():
 
 
 def astar(maze, start, end):
-    """Returns a list of tuples as a path from the given start to the given end in the given maze"""
+    """Returns a list of tuples as a path from the given start to the given end in the given maze
+
+    :param maze: Input maze
+    :type maze: list
+    :param start: Start point
+    :type start: tuple
+    :param end: End point
+    :type end: list
+    """
 
     # Create start and end node
     start_node = Node(None, start)
