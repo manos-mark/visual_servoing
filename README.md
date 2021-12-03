@@ -17,7 +17,7 @@ For the project, the mobile robot used is a Turtlebot3 Burger. The Turtlebot3 is
 
 # First Objective - Move from current to target position
 
-## 1. Camera Calibraton 
+## 1. Camera Calibration 
 This is a crusial step for the fisheye camera which is integrated to Turtlebot3. The implementation uses the [camera_calibration](http://wiki.ros.org/camera_calibration) package from ROS. This packages uses OpenCV camera calibration, fully described [here](https://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html). For this step we only have to use the checkerboard in order to get all the related coefficients for the undistortion.  
 ![Checkerboard](https://us.123rf.com/450wm/vectora/vectora1909/vectora190904441/131156441-checkered-chequered-seamless-pattern-squares-seamless-pattern-texture-checkerboard-chess-board.jpg?ver=6)
 
@@ -72,7 +72,7 @@ The output of this step is an one directional array with lenght equals to the nu
 
 ![Obstacles](images/obstacles.png)
 
-## 3. Find shortest path using A-star Algorithm
+## 2. Find shortest path using A-star Algorithm
 Using the obstacles map array of the previous step we implement the [Path planning module](https://github.com/manoskout/visual_servoing/blob/master/scripts/path_planning.py) to receive the shortest path the robot should move to go into the target faster. 
 
 This is a graph based algorithm which is using an heuristic method for better performance. The core of this is f = g + h, where:
@@ -82,7 +82,7 @@ This is a graph based algorithm which is using an heuristic method for better pe
 
 Read the following [article](https://medium.com/@nicholas.w.swift/easy-a-star-pathfinding-7e6689c7f7b2) for more informations.
 
-## 4. Middle-point pose
+## 3. Estimate middle-point pose
 Shortest path contains some middlepoints that the robot should move to find the target position faster without any collision with the obstacles. 
 
 Here, we face a problem because we only have the indexes of those middlepoints. So, we decided to convert those indexes to pixels according to our boxed frame. Using their corners we calculate their poses the same way we calculate the pose for the aruco markers with the function: `cv2.aruco.estimatePoseSingleMarkers`.   
