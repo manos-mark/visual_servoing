@@ -85,7 +85,7 @@ rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotationa
 Then we stack the rotational matrix horizontally with the transformational vector and append at the end the row *[0, 0, 0, 1]* in order to receive the homogeneous matrix. 
 
 ## 6. Calculate alpha (α) angle and distance rho (ρ) between current and target positions
-<p align="center">![Angles](images/angles.png)</p>
+<p align="center"><img src=images/angles.png></p>
 
 The homogeneous matrices we obtain from the previous step, describe the position of each position in respect with the camera's frame. We need to combine them in order to receive the position from one position in respect to the other position. To do that, we multiply the inverse of the current homogeneous matrix with the target homogeneous matrix to receive the combined homogeneous matrix (t):  
 ```python
