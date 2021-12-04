@@ -19,7 +19,7 @@ For the project, the mobile robot used is a Turtlebot3 Burger. The Turtlebot3 is
 
 ## 1. Camera Calibration 
 This is a crusial step for the fisheye camera which is integrated to Turtlebot3. The implementation uses the [camera_calibration](http://wiki.ros.org/camera_calibration) package from ROS. This packages uses OpenCV camera calibration, fully described [here](https://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html). For this step we only have to use the checkerboard in order to get all the related coefficients for the undistortion.  
-![Checkerboard](https://us.123rf.com/450wm/vectora/vectora1909/vectora190904441/131156441-checkered-chequered-seamless-pattern-squares-seamless-pattern-texture-checkerboard-chess-board.jpg?ver=6)
+![Checkerboard](images/checkerboard.jpg)
 
 ## 2. Receive image
 The next step is to receive image frames by subscribing to the ROS topic "/camera/image_raw" and convert it to numpy array. Then we need to crop the image according to our needs, by specifing the window that we need to work on. Afterwards we undistord the received image using the camera matrix and the distortion coefficients received on the previous step.
