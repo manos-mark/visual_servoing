@@ -62,20 +62,20 @@ The structure of this message is the following:
 `geometry_msgs/Vector3 translational`
 
 Here is the image with both of the poses:  
-![Poses](images/poses.png)
+<p align="center">![Poses](images/poses.png)</p>
 
 ## 5. Controller - Convert rotational and translational matrices to homogeneous matrices
 The homogeneous transformation is encoded by the extrinsic parameters `R` and `t` and represents the change of basis from world coordinate system `w` to the camera coordinate sytem `c`. Thus, given the representation of the point `P` in world coordinates, `Pw`, we obtain `P`'s representation in the camera coordinate system, `Pc`, by:
 
-![Camera_points](images/camera_points.png)
+<p align="center">![Camera_points](images/camera_points.png)</p>
 
 This homogeneous transformation is composed out of `R`, a 3-by-3 rotation matrix, and `t`, a 3-by-1 translation vector:
 
-![homogeneous_matrix](images/homogeneous_matrix.png)
+<p align="center">![homogeneous_matrix](images/homogeneous_matrix.png)</p>
 
 Combining the projective transformation and the homogeneous transformation, we obtain the projective transformation that maps 3D points in world coordinates into 2D points in the image plane and in normalized camera coordinates:
 
-![homogeneous_matrix2](images/homogeneous_matrix2.png)
+<p align="center">![homogeneous_matrix2](images/homogeneous_matrix2.png)</p>
 
 The [controller module](https://github.com/manoskout/visual_servoing/blob/master/scripts/controller.py) have to convert the rotational vector into rotational matrix using the Rodrigues transformation with the OpenCV function:   
 ```python
@@ -85,14 +85,14 @@ rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotationa
 Then we stack the rotational matrix horizontally with the transformational vector and append at the end the row *[0, 0, 0, 1]* in order to receive the homogeneous matrix. 
 
 ## 6. Calculate alpha (α) angle and distance rho (ρ) between current and target positions
-![Angles](images/angles.png)
+<p align="center">![Angles](images/angles.png)</p>
 
 The homogeneous matrices we obtain from the previous step, describe the position of each position in respect with the camera's frame. We need to combine them in order to receive the position from one position in respect to the other position. To do that, we multiply the inverse of the current homogeneous matrix with the target homogeneous matrix to receive the combined homogeneous matrix (t):  
 ```python
 t = np.matmul(np.linalg.inv(self.curr_homogeneous_matrix), self.target_homogeneous_matrix)
 ```
 
-![Combined_homogeneous_matrix](images/combined_homogeneous_matrix.jpg)
+<p align="center">![Combined_homogeneous_matrix](images/combined_homogeneous_matrix.jpg)</p>
 
 Following, we need to calculate the angle (alpha) and the distance (rho) that the robot should move:  
 
@@ -123,7 +123,7 @@ Then we iterate for every box of the image and convert the box to HSV. Next we m
 
 The output of this step is an one directional array with lenght equals to the number of the boxes wich contains zero's (when there is no obstacle) and one's (where there is an obstacle).
 
-![Obstacles](images/obstacles.png)
+<p align="center">![Obstacles](images/obstacles.png)</p>
 
 ## 2. Find shortest path using A-star Algorithm
 Using the obstacles map array of the previous step we implement the [Path planning module](https://github.com/manoskout/visual_servoing/blob/master/scripts/path_planning.py) to receive the shortest path the robot should move to go into the target faster. 
@@ -140,13 +140,13 @@ Shortest path contains some middlepoints that the robot should move to find the 
 
 Here, we face a problem because we only have the indexes of those middlepoints. So, we decided to convert those indexes to pixels according to our boxed frame. Using their corners we calculate their poses the same way we calculate the pose for the aruco markers with the function: `cv2.aruco.estimatePoseSingleMarkers`.   
 
-![Middlepoints](images/midlepoint_poses.png)
+<p align="center">![Middlepoints](images/midlepoint_poses.png)</p>
 
 ## 4. Draw shortest path
 Then, we itterate throught the obstacles map and draw on the image each middle point of the shortest path we calculated in the previous steps.
 
 This is the final map, where blue zeros specify that there is a valid movement for the robot, light blue X specify there is an obstacle, orange circles specify the shortest path, bold white S and G specify the starting and goal point of the path respectively.  
-![Final_map](images/final_map.png)
+<p align="center">![Final_map](images/final_map.png)</p>
 
 ## 5. Move on each middle point
 Our controller receives the current pose vectors each time the `on_receive_image` callback is executed. It calculates the homogeneous matrix as explaind earlier and save it as class variable `self.current_homogeneous_matrix`.
