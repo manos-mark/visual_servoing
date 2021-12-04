@@ -12,7 +12,7 @@ from numpy.lib.function_base import _calculate_shapes
 from visual_servoing.msg import Pose_estimation_vectors
 
 class Controller:
-    """Robot controller class using current and target homogenious matrices
+    """Robot controller class using current and target homogeneous matrices
     """
     def __init__(self):
         rospy.init_node('robot_controller')
@@ -21,8 +21,8 @@ class Controller:
         rospy.Subscriber('target_position', Pose_estimation_vectors, self.update_target_position_path)
         
         self.current_time = 0
-        self.target_homogenious_matrix = None
-        self.curr_homogenious_matrix = None
+        self.target_homogeneous_matrix = None
+        self.curr_homogeneous_matrix = None
         self.rho = float("inf")
         self.alpha = float("inf")
         self.beta = float("inf")
@@ -54,7 +54,7 @@ class Controller:
 
     def set_current_pos(self, data: Pose_estimation_vectors):
         """Calculate the rotational matrix from the rotational vector and apply some transformations
-        to get the homogenious matrix and set it as the current position. Furthermore we calculate
+        to get the homogeneous matrix and set it as the current position. Furthermore we calculate
         theta using Euler angles.
 
         :param data: Rotational and translational vectors
@@ -62,12 +62,12 @@ class Controller:
         """
         rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))
         translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
-        homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
-        self.curr_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
+        homogeneous_matrix = np.hstack((rotational_matrix, translational_vector))
+        self.curr_homogeneous_matrix = np.vstack((homogeneous_matrix, [0, 0, 0, 1]))
         
     def set_target_pos(self, data: Pose_estimation_vectors):
         """Calculate the rotational matrix from the rotational vector and apply some transformations
-        to get the homogenious matrix and set it as the target position. Furthermore we calculate
+        to get the homogeneous matrix and set it as the target position. Furthermore we calculate
         theta using Euler angles.
 
         :param data: Rotational and translational vectors
@@ -76,8 +76,8 @@ class Controller:
         
         rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))
         translational_vector = np.array([[data.translational.x], [data.translational.y], [data.translational.z]], dtype=np.float32)
-        homogenious_matrix = np.hstack((rotational_matrix, translational_vector))
-        self.target_homogenious_matrix = np.vstack((homogenious_matrix, [0, 0, 0, 1]))
+        homogeneous_matrix = np.hstack((rotational_matrix, translational_vector))
+        self.target_homogeneous_matrix = np.vstack((homogeneous_matrix, [0, 0, 0, 1]))
         
         self.rho = float('inf')
         self.alpha = float("inf")
@@ -94,65 +94,58 @@ class Controller:
 
         # Controller constants
         k_rho = 0.6
-        k_beta = 0.650
+        k_beta = 0.950
+        k_alpha = 0.650
 
         while (not target_reached) and (not rospy.is_shutdown()):
-            # Fix the initial angle 0.01
-            while (abs(self.beta) > 0.07) and (not rospy.is_shutdown()):
-
-                if (self.curr_homogenious_matrix is None) or (self.target_homogenious_matrix is None):
+            # Fix the initial angle 
+            while (abs(self.alpha) > 0.07) and (not rospy.is_shutdown()):
+                if (self.curr_homogeneous_matrix is None) or (self.target_homogeneous_matrix is None):
                     continue
 
-                t = np.matmul(np.linalg.inv(self.curr_homogenious_matrix), self.target_homogenious_matrix)
+                t = np.matmul(np.linalg.inv(self.curr_homogeneous_matrix), self.target_homogeneous_matrix)
                 dx = t[0][3]
                 dy = t[1][3]
 
-                self.beta = math.atan2(dy, dx)
+                self.alpha = math.atan2(dy, dx)
                 
                 self.rho = math.sqrt(math.pow(dy, 2) + math.pow(dx, 2)) # self.distance_to_target(self.current_pos, self.target_pos)
 
                 v = 0
-                w = k_beta * self.beta
-                # print('beta: ',self.beta, '\tdx: ',dx, '\tdy: ',dy, '\trho: ', self.rho)
-                # print('w: ',w)
+                w = k_alpha * self.alpha
                 self.send_velocity_to_robot(v,w)
             
-            # Go to target 0.09
-            # while (self.rho >= 0.09) and (abs(self.beta) <= 0.09) and (not rospy.is_shutdown()): 
+            # Go to target 
             while (self.rho >= 0.08) and (not rospy.is_shutdown()): 
-                # k_beta = -0.15
-                
-                if (self.curr_homogenious_matrix is None) or (self.target_homogenious_matrix is None):
+                if (self.curr_homogeneous_matrix is None) or (self.target_homogeneous_matrix is None):
                     return
 
                 # print('\n cur_theta: ', theta, '\t\t target_theta: ', thetag)
 
-                t = np.matmul(np.linalg.inv(self.curr_homogenious_matrix), self.target_homogenious_matrix)
+                t = np.matmul(np.linalg.inv(self.curr_homogeneous_matrix), self.target_homogeneous_matrix)
 
                 dx = t[0][3]
                 dy = t[1][3]
 
-                self.beta = math.atan2(dy, dx)
+                self.alpha = math.atan2(dy, dx)
 
                 # distance to target
                 self.rho = math.sqrt(math.pow(dy, 2) + math.pow(dx, 2)) # self.distance_to_target(self.current_pos, self.target_pos)
-                print('beta: ',self.beta, '\tdx: ',dx, '\tdy: ',dy, '\trho: ', self.rho)
     
                 v = k_rho * self.rho                
                 w = 0
                 self.send_velocity_to_robot(v,w)
 
             # Fix the final angle
-            self.beta = float("inf")
             while (abs(self.beta) > 0.09) and (len(self.target_position_path)==0) and (not rospy.is_shutdown()):
                 k_beta = 0.950
                 
-                if (self.curr_homogenious_matrix is None) or (self.target_homogenious_matrix is None):
+                if (self.curr_homogeneous_matrix is None) or (self.target_homogeneous_matrix is None):
                     continue
 
                 # print('\n cur_theta: ', theta, '\t\t target_theta: ', thetag)
 
-                t = np.matmul(np.linalg.inv(self.curr_homogenious_matrix), self.target_homogenious_matrix)
+                t = np.matmul(np.linalg.inv(self.curr_homogeneous_matrix), self.target_homogeneous_matrix)
                 dx = t[0][3]
                 dy = t[1][3]
 
