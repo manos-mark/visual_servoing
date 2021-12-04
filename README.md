@@ -62,20 +62,20 @@ The structure of this message is the following:
 `geometry_msgs/Vector3 translational`
 
 Here is the image with both of the poses:  
-<p align="center">![Poses](images/poses.png)</p>
+<p align="center"><img src=images/poses.png></p>
 
 ## 5. Controller - Convert rotational and translational matrices to homogeneous matrices
 The homogeneous transformation is encoded by the extrinsic parameters `R` and `t` and represents the change of basis from world coordinate system `w` to the camera coordinate sytem `c`. Thus, given the representation of the point `P` in world coordinates, `Pw`, we obtain `P`'s representation in the camera coordinate system, `Pc`, by:
 
-<p align="center">![Camera_points](images/camera_points.png)</p>
+<p align="center"><img src=images/camera_points.png> </p>
 
 This homogeneous transformation is composed out of `R`, a 3-by-3 rotation matrix, and `t`, a 3-by-1 translation vector:
 
-<p align="center">![homogeneous_matrix](images/homogeneous_matrix.png)</p>
+<p align="center"><img src=images/homogeneous_matrix.png></p>
 
 Combining the projective transformation and the homogeneous transformation, we obtain the projective transformation that maps 3D points in world coordinates into 2D points in the image plane and in normalized camera coordinates:
 
-<p align="center">![homogeneous_matrix2](images/homogeneous_matrix2.png)</p>
+<p align="center"><img src=images/homogeneous_matrix2.png></p>
 
 The [controller module](https://github.com/manoskout/visual_servoing/blob/master/scripts/controller.py) have to convert the rotational vector into rotational matrix using the Rodrigues transformation with the OpenCV function:   
 ```python
@@ -92,7 +92,7 @@ The homogeneous matrices we obtain from the previous step, describe the position
 t = np.matmul(np.linalg.inv(self.curr_homogeneous_matrix), self.target_homogeneous_matrix)
 ```
 
-<p align="center">![Combined_homogeneous_matrix](images/combined_homogeneous_matrix.jpg)</p>
+<p align="center"><img src=images/combined_homogeneous_matrix.jpg></p>
 
 Following, we need to calculate the angle (alpha) and the distance (rho) that the robot should move:  
 
@@ -123,7 +123,7 @@ Then we iterate for every box of the image and convert the box to HSV. Next we m
 
 The output of this step is an one directional array with lenght equals to the number of the boxes wich contains zero's (when there is no obstacle) and one's (where there is an obstacle).
 
-<p align="center">![Obstacles](images/obstacles.png)</p>
+<p align="center"><img src=images/obstacles.png></p>
 
 ## 2. Find shortest path using A-star Algorithm
 Using the obstacles map array of the previous step we implement the [Path planning module](https://github.com/manoskout/visual_servoing/blob/master/scripts/path_planning.py) to receive the shortest path the robot should move to go into the target faster. 
@@ -140,13 +140,13 @@ Shortest path contains some middlepoints that the robot should move to find the 
 
 Here, we face a problem because we only have the indexes of those middlepoints. So, we decided to convert those indexes to pixels according to our boxed frame. Using their corners we calculate their poses the same way we calculate the pose for the aruco markers with the function: `cv2.aruco.estimatePoseSingleMarkers`.   
 
-<p align="center">![Middlepoints](images/midlepoint_poses.png)</p>
+<p align="center"><img src=images/midlepoint_poses.png></p>
 
 ## 4. Draw shortest path
 Then, we itterate throught the obstacles map and draw on the image each middle point of the shortest path we calculated in the previous steps.
 
 This is the final map, where blue zeros specify that there is a valid movement for the robot, light blue X specify there is an obstacle, orange circles specify the shortest path, bold white S and G specify the starting and goal point of the path respectively.  
-<p align="center">![Final_map](images/final_map.png)</p>
+<p align="center"><img src=images/final_map.png></p>
 
 ## 5. Move on each middle point
 Our controller receives the current pose vectors each time the `on_receive_image` callback is executed. It calculates the homogeneous matrix as explaind earlier and save it as class variable `self.current_homogeneous_matrix`.
