@@ -1,6 +1,6 @@
 # Visual Servoing Project
 ## Introduction
-The purpose of this project is to implement an end to end visual sevoing project using a fish-eye camera and a Turtlubot3 with ROS. 
+The purpose of this project is to implement an end to end visual sevroing project using a fish-eye camera and a Turtlubot3 with ROS. 
 1. The first objective is to move the robot from the current position to the target position. To specify those positions and their poses we use two Aruco markers. 
 2. The second task for the robot is to avoid obstacles that are specified using red color, we implemented this task using A-star path finding algorithm.
 3. Finally, when the robot is at the target position we have to do "parking", that means that the targets position pose should be the same as the robot's pose.
