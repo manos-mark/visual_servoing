@@ -117,11 +117,11 @@ Now we fix the beta angle by publishing to the ROS topic `cmd_vel` only angular 
 
 # Second Objective - Avoid obstacles
 ## 1. Obstacle detection
-The [obstacle detection module](https://github.com/manoskout/visual_servoing/blob/master/scripts/obstacle_detection.py) is using the input image and slice it into boxes of size equal to the robot size. This way we have an array with all the possible moves that the robot can achive. To distinguish the obstacles, that mean if there is an obstacle -a red box- in the image the robot should not be able to move there. 
+The [obstacle detection module](https://github.com/manoskout/visual_servoing/blob/master/scripts/obstacle_detection.py) is using the input image and slice it into boxes of size equal to the robot size. This way, we have an array with all the possible moves that the robot can achieve. To distinguish the obstacles, that mean if there is an obstacle -a red box- in the image, the robot should not be able to move there. 
 
-Then we iterate for every box of the image and convert the box to HSV. Next we mask the image if the box contains any pixels in the range of red color, and apply the bitwise mask to the output. If the box contains red pixels we assume that it is an obstacle.
+Then we iterate for every box of the image and convert the box to HSV. Next, we mask the image if the box contains any pixels in the range of red color, and apply the bitwise mask to the output. If the box contains red pixels, we assume that it is an obstacle.
 
-The output of this step is an one directional array with lenght equals to the number of the boxes wich contains zero's (when there is no obstacle) and one's (where there is an obstacle).
+The output of this step is a one directional array with length equals to the number of the boxes, which contains zero's (when there is no obstacle) and one's (where there is an obstacle).
 
 <p align="center"><img src=images/obstacles.png></p>
 
