@@ -3,13 +3,13 @@
 The purpose of this project is to implement an end to end visual sevroing project using a fish-eye camera and a Turtlubot3 with ROS. 
 1. The first objective is to move the robot from the current position to the target position. To specify those positions and their poses we use two Aruco markers. 
 2. The second task for the robot is to avoid obstacles that are specified using red color, we implemented this task using A-star path finding algorithm.
-3. Finally, when the robot is at the target position we have to do "parking", that means that the targets position pose should be the same as the robot's pose.
+3. Finally, when the robot is at the target's position we have to do "parking", that means that the targets position pose should be the same as the robot's pose.
 
-Following on this report we will analyse the mathematical theoritical background and the code implementation we implemented.
+Following on this report, we will analyze the mathematical theoretical background and the code implementation we implemented.
 
 ## What is ROS?
-The Robot Operating System (ROS) is an open source middleware which contains a set of libraries,softwares and tools that are used to facilitate the development of robotic applications. There is a plethora of features from sensor drivers to state-of-the-art algorithms. As middleware, it contains characteristics of both software and hardware, hencee, it is able to perform various actions like hardware abstraction and low level control.
-Until now, different version of ROS exists with some crusial differences, so for compatibility reasons we are using the Melodic release.
+The Robot Operating System (ROS) is an open source middleware which contains a set of libraries, software and tools that are used to facilitate the development of robotic applications. There is a plethora of features, from sensor drivers to state-of-the-art algorithms. As middleware, it contains characteristics of both software and hardware, hence, it is able to perform various actions like hardware abstraction and low level control.
+Until now, a different version of ROS exists with some crucial differences, so for compatibility reasons we are using the Melodic release.
 
 ## Robot used for this scenario
 ### Turtlebot Description
@@ -18,24 +18,24 @@ For the project, the mobile robot used is a Turtlebot3 Burger. The Turtlebot3 is
 # First Objective - Move from current to target position
 
 ## 1. Camera Calibration 
-Camera calibration is an integral part of this project. For this phase, the project uses the [camera_calibration](http://wiki.ros.org/camera_calibration) package which allows easy calibration of monocular cameras using a checkerboard calibration target. The packagess uses OpenCV library which contains the camera calibration method.  
+Camera calibration is an integral part of this project. For this phase, the project uses the [camera_calibration](http://wiki.ros.org/camera_calibration) package which allow easy calibration of monocular cameras using a checkerboard calibration target. The packages use OpenCV library which contains the camera calibration method.  
 ![Checkerboard](images/checkerboard.jpg)
 
 #### **Intrinsic calibration**  
-As we aforementioned, it uses the [camera_calibration](http://wiki.ros.org/camera_calibration) package. This package allows easy calibration of monocular or stero cameras. The checkerboard was the tool in order to fix the *Radial Distortion* of the acquired image. *Radial or Barrel Distortion* can be presented as:
+As we aforementioned, it uses the [camera_calibration](http://wiki.ros.org/camera_calibration) package. This package allow easy calibration of monocular or stereo cameras. The checkerboard was the tool in order to fix the *Radial Distortion* of the acquired image. *Radial or Barrel Distortion* can be presented as:
 
 <p align="center"><img src="https://render.githubusercontent.com/render/math?math=\begin{aligned}x_{distorted}=x(1%2Bk_{1}r^2%2Bk_{2}r^4%2Bk_{3}r^6)\end{aligned}"></p>
 
 <p align="center"><img src="https://render.githubusercontent.com/render/math?math=\begin{aligned}y_{distorted}=y(1%2Bk_{1}r^2%2Bk_{2}r^4%2Bk_{3}r^6)\end{aligned}"></p>
 
 
-In the same manner, tangenial distortion occurs because the imaging-taking lense is not aligned perfectly parallel to the imaging plane. So, some images look nearer than expexted. The amount of tangenial distortion can be presented as below:  
+In the same manner, tangential distortion occurs because the imaging-taking lens is not aligned perfectly parallel to the imaging plane. So, some images look nearer than expected. The amount of tangential distortion can be presented as below:  
 
 <p align="center"><img src="https://render.githubusercontent.com/render/math?math=\begin{aligned}x_{distorted}=x%2B[2p_{1}xy%2Bp_{2}(r^2%2B2x^2)]\end{aligned}"></p>
 
 <p align="center"><img src="https://render.githubusercontent.com/render/math?math=\begin{aligned}y_{distorted}=y%2B[p_{1}(r^2%2B2x^2)%2B2p_{2}xy]\end{aligned}"></p>
 
-According to the equation above, we can find the five paremeters, known as distortion coefficients
+According to the equation above, we can find the five parameters, known as distortion coefficients
 
 
 <p align="center"><img src="https://render.githubusercontent.com/render/math?math=DistortionCoefficients=(k_{1},k_{2},p_{1},p_{2},k_{3})"></p>
@@ -45,17 +45,17 @@ Furthermore, **intrinsic parameters** allows a mapping between camera coordinate
 <p align="center"><img src="https://render.githubusercontent.com/render/math?math=%5Cbegin%7Baligned%7D%0Acamera%20matrix%20%3D%0A%5Cbegin%7Bbmatrix%7D%0A%20%20%20f_%7Bx%7D%20%26%200%20%26%20C_%7Bx%7D%5C%5C%0A%20%20%200%20%26%20f_%7By%7D%20%26%20C_%7By%7D%5C%5C%0A%20%20%200%20%26%200%20%26%201%20%0A%5Cend%7Bbmatrix%7D%20%0A%5Cend%7Baligned%7D%0A"></p>
 
 ## 2. Receive image
-The next step is to receive image frames by subscribing to the ROS topic "/camera/image_raw" and convert it to numpy array. Then we need to crop the image according to our needs, by specifing the window that we need to work on. Afterwards we undistord the received image using the camera matrix and the distortion coefficients received on the previous step.
+The next step is to receive image frames by subscribing to the ROS topic "/camera/image_raw" and convert it to NumPy array. Then we need to crop the image according to our needs, by specifying the window that we need to work on. Afterwards, we undistort the received image using the camera matrix and the distortion coefficients received on the previous step.
 
 ## 3. Detect Markers
-Using the OpenCV library we can detect two Aruco markers that are placed on the top of the robot, one marker for the current and one for the target position. We only have to call the function `cv2.detectMarkers` from wich we receive the corners of each marker and we can move on to the pose estimation.
+Using the OpenCV library, we can detect two Aruco markers that are placed on the top of the robot, one marker for the current and one for the target position. We only have to call the function `cv2.detectMarkers` from which we receive the corners of each marker and we can move on to the pose estimation.
 
 ## 4. Pose estimation
- Next step is to estimate the current and target poses, simple by calling the function `cv2.estimatePoseSingleMarkers` in the [pose estimation module](https://github.com/manoskout/visual_servoing/blob/master/scripts/pose_estimation.py). From which we receive two vectors for each marker, one translational vector `[x, y, z]` and one rotational vector `[x, y, z]`. Using the ROS publisher we sent those vectors to the robot controller, who is responsible to translate those matrices in a way that the robot should be able to move. This is implemented with the ROS publisher 
+ Next step is to estimate the current and target poses, simple by calling the function `cv2.estimatePoseSingleMarkers` in the [pose estimation module](https://github.com/manoskout/visual_servoing/blob/master/scripts/pose_estimation.py). From which we receive two vectors for each marker, one translational vector `[x, y, z]` and one rotational vector `[x, y, z]`. Using the ROS publisher, we sent those vectors to the robot controller, who is responsible to translate those matrices in a way that the robot should be able to move. This is implemented with the ROS publisher 
  ```python 
  rospy.Publisher('current_position', Pose_estimation_vectors, queue_size=10)
  ```
- where the *current_position* is the ROS topic that the controller will subscribe to fetch the custom message *Pose_estimation_vectors* tha we created, in order to send those vectors.
+ Where the *current_position* is the ROS topic that the controller will subscribe to fetch the custom message *Pose_estimation_vectors* that we created, in order to send those vectors.
 
 The structure of this message is the following:          
 `geometry_msgs/Vector3 rotational`  
@@ -65,7 +65,7 @@ Here is the image with both of the poses:
 <p align="center"><img src=images/poses.png></p>
 
 ## 5. Controller - Convert rotational and translational matrices to homogeneous matrices
-The homogeneous transformation is encoded by the extrinsic parameters `R` and `t` and represents the change of basis from world coordinate system `w` to the camera coordinate sytem `c`. Thus, given the representation of the point `P` in world coordinates, `Pw`, we obtain `P`'s representation in the camera coordinate system, `Pc`, by:
+The homogeneous transformation is encoded by the extrinsic parameters `R` and `t` and represents the change of basis from world coordinate system `w` to the camera coordinate system `c`. Thus, given the representation of the point `P` in world coordinates, `Pw`, we obtain `P`'s representation in the camera coordinate system, `Pc`, by:
 
 <p align="center"><img src=images/camera_points.png> </p>
 
@@ -77,7 +77,7 @@ Combining the projective transformation and the homogeneous transformation, we o
 
 <p align="center"><img src=images/homogeneous_matrix2.png></p>
 
-The [controller module](https://github.com/manoskout/visual_servoing/blob/master/scripts/controller.py) have to convert the rotational vector into rotational matrix using the Rodrigues transformation with the OpenCV function:   
+The [controller module](https://github.com/manoskout/visual_servoing/blob/master/scripts/controller.py) has to convert the rotational vector into rotational matrix using the Rodrigues transformation with the OpenCV function:   
 ```python
 rotational_matrix, _ = cv2.Rodrigues(np.array([data.rotational.x, data.rotational.y, data.rotational.z], dtype=np.float32))
 ```  
