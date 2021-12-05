@@ -125,8 +125,8 @@ The output of this step is a one directional array with length equals to the num
 
 <p align="center"><img src=images/obstacles.png></p>
 
-## 2. Find shortest path using A-star Algorithm
-Using the obstacles map array of the previous step we implement the [Path planning module](https://github.com/manoskout/visual_servoing/blob/master/scripts/path_planning.py) to receive the shortest path the robot should move to go into the target faster. 
+## 2. Find the shortest path using A-star Algorithm
+Using the obstacles map array of the previous step, we implement the [Path planning module](https://github.com/manoskout/visual_servoing/blob/master/scripts/path_planning.py) to receive the shortest path the robot should move to go into the target faster. 
 
 This is a graph based algorithm which is using an heuristic method for better performance. The core of this is f = g + h, where:
 - F is the total cost  
