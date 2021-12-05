@@ -104,7 +104,7 @@ dy = t[1][3]
 
 Then we calculate the arctan using dx, dy:  
 ```python 
-self.beta = math.atan2(dy, dx)
+self.alpha = math.atan2(dy, dx)
 ```
 
 And finally we get the distance to target (rho) by applying the Euclidean distance:  
