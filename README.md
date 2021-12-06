@@ -1,4 +1,6 @@
 # Visual Servoing Project
+
+### Read the documentation on [read the docs](https://visual-servoing.readthedocs.io/en/latest/) 
 ## Introduction
 The purpose of this project is to implement an end to end visual sevroing project using a fish-eye camera and a Turtlubot3 with ROS. 
 1. The first objective is to move the robot from the current position to the target position. To specify those positions and their poses we use two Aruco markers. 
