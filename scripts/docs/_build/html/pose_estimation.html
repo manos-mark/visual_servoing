@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pose_estimation module &mdash; Visual Servoing  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="utils module" href="utils.html" />
+    <link rel="prev" title="path_planning module" href="path_planning.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> Visual Servoing
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">scripts</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="controller.html">controller module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="obstacle_detection.html">obstacle_detection module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="path_planning.html">path_planning module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">pose_estimation module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">utils module</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Visual Servoing</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="modules.html">scripts</a> &raquo;</li>
+      <li>pose_estimation module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/pose_estimation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="module-pose_estimation">
+<span id="pose-estimation-module"></span><h1>pose_estimation module<a class="headerlink" href="#module-pose_estimation" title="Permalink to this headline"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="pose_estimation.detect_obstacles_and_find_path">
+<span class="sig-prename descclassname"><span class="pre">pose_estimation.</span></span><span class="sig-name descname"><span class="pre">detect_obstacles_and_find_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">undistort_frame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_with_pose</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_position</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_position</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pose_estimation.detect_obstacles_and_find_path" title="Permalink to this definition"></a></dt>
+<dd><p>Generate a map of the red obstacles using the obstacle detector and feed the map
+to the path planning algorithm to receive the shortest path. Skip the first and the last 
+steps of the path because we have the markers for those. Then we need to convert those middlepoints
+from array indexes to pixels in order to draw the map.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>undistort_frame</strong> (<em>ndarray</em>) – Undistorted frame</p></li>
+<li><p><strong>image_with_pose</strong> (<em>ndarray</em>) – Frame with poses</p></li>
+<li><p><strong>current_position</strong> (<em>dict</em>) – Current position</p></li>
+<li><p><strong>target_position</strong> (<em>dict</em>) – Target position</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Shortest path pixels</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Shortest path indexes</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pose_estimation.estimate_current_target_pose">
+<span class="sig-prename descclassname"><span class="pre">pose_estimation.</span></span><span class="sig-name descname"><span class="pre">estimate_current_target_pose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aruco_dict_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matrix_coefficients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([[244.09275,</span> <span class="pre">0.,</span> <span class="pre">287.49266],</span> <span class="pre">[0.,</span> <span class="pre">243.87081,</span> <span class="pre">212.51607],</span> <span class="pre">[0.,</span> <span class="pre">0.,</span> <span class="pre">1.]])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distortion_coefficients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([[0.010984,</span> <span class="pre">-</span> <span class="pre">0.005869,</span> <span class="pre">-</span> <span class="pre">0.000289,</span> <span class="pre">-</span> <span class="pre">0.000152,</span> <span class="pre">0.]])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imshow</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pose_estimation.estimate_current_target_pose" title="Permalink to this definition"></a></dt>
+<dd><p>Find all the Aruco markers in the picure and estimate their position.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frame</strong> (<em>ndarray</em>) – Frame from the video stream</p></li>
+<li><p><strong>current_id</strong> (<em>int</em><em>, </em><em>optional</em>) – ID of the marker placed in the initial position, defaults to CURRENT_ID</p></li>
+<li><p><strong>target_id</strong> (<em>int</em><em>, </em><em>optional</em>) – ID of the marker placed in the target position, defaults to TARGET_ID</p></li>
+<li><p><strong>aruco_dict_type</strong> (<em>dict</em><em>, </em><em>optional</em>) – Aruco dictionary type, defaults to cv2.aruco.DICT_ARUCO_ORIGINAL</p></li>
+<li><p><strong>matrix_coefficients</strong> (<em>dict</em><em>, </em><em>optional</em>) – Intrinsic matrix of the calibrated camera, defaults to CAMERA_MATRIX</p></li>
+<li><p><strong>distortion_coefficients</strong> (<em>dict</em><em>, </em><em>optional</em>) – Distortion coefficients associated with your camera, defaults to DISTORTION_COEF</p></li>
+<li><p><strong>imshow</strong> (<em>bool</em><em>, </em><em>optional</em>) – Show the image or not?, defaults to True</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The frame with the axis drawn on it</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Current robot position</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Target robot position</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pose_estimation.estimate_path_poses">
+<span class="sig-prename descclassname"><span class="pre">pose_estimation.</span></span><span class="sig-name descname"><span class="pre">estimate_path_poses</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shortest_path_center_pixels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shortest_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pose_estimation.estimate_path_poses" title="Permalink to this definition"></a></dt>
+<dd><p>Estimate pose for each middle point, using the center we find the corners of it
+and then we feed it to cv2.aruco.estimatePoseSingleMarkers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frame</strong> (<em>ndarray</em>) – Input image frame</p></li>
+<li><p><strong>shortest_path_center_pixels</strong> (<em>list</em>) – Shorter path center pixels of each middle point</p></li>
+<li><p><strong>shortest_path</strong> (<em>list</em>) – Shorter path center indexes of each middle point</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of generated poses</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pose_estimation.generate_message">
+<span class="sig-prename descclassname"><span class="pre">pose_estimation.</span></span><span class="sig-name descname"><span class="pre">generate_message</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rvec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tvec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">visual_servoing.msg._Pose_estimation_vectors.Pose_estimation_vectors</span></span></span><a class="headerlink" href="#pose_estimation.generate_message" title="Permalink to this definition"></a></dt>
+<dd><p>Convert rotational and translational vector to a message of type Pose_estimation_vectors</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rvec</strong> (<em>list</em>) – Rotational vector</p></li>
+<li><p><strong>tvec</strong> (<em>list</em>) – Translational vector</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Converted message</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Pose_estimation_vectors</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pose_estimation.on_image_received">
+<span class="sig-prename descclassname"><span class="pre">pose_estimation.</span></span><span class="sig-name descname"><span class="pre">on_image_received</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pose_estimation.on_image_received" title="Permalink to this definition"></a></dt>
+<dd><p>Preprocess and undistort the image, estimate poses of the current and target position 
+and publish them, then detect red obstacles, then find the shortest path between the 
+current and target, and finally publish the middlepoints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>ndarray</em>) – Image frame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pose_estimation.preprocess_image">
+<span class="sig-prename descclassname"><span class="pre">pose_estimation.</span></span><span class="sig-name descname"><span class="pre">preprocess_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pose_estimation.preprocess_image" title="Permalink to this definition"></a></dt>
+<dd><p>Preprocess the input image by converting it to numpy array, then undistort the frame
+using the calibration data</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>ndarray</em>) – Input image frame</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Undistorted frame</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pose_estimation.receive_image">
+<span class="sig-prename descclassname"><span class="pre">pose_estimation.</span></span><span class="sig-name descname"><span class="pre">receive_image</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pose_estimation.receive_image" title="Permalink to this definition"></a></dt>
+<dd><p>Receive image from the camera topic using a subscriber 
+and call the callback function on_image_received</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="path_planning.html" class="btn btn-neutral float-left" title="path_planning module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="utils.html" class="btn btn-neutral float-right" title="utils module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Emmanouil Markodimitrakis, Emmanouil Koutoulakis.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

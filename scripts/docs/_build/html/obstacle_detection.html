@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>obstacle_detection module &mdash; Visual Servoing  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="path_planning module" href="path_planning.html" />
+    <link rel="prev" title="controller module" href="controller.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> Visual Servoing
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">scripts</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="controller.html">controller module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">obstacle_detection module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="path_planning.html">path_planning module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pose_estimation.html">pose_estimation module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">utils module</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Visual Servoing</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="modules.html">scripts</a> &raquo;</li>
+      <li>obstacle_detection module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/obstacle_detection.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="module-obstacle_detection">
+<span id="obstacle-detection-module"></span><h1>obstacle_detection module<a class="headerlink" href="#module-obstacle_detection" title="Permalink to this headline"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="obstacle_detection.ObstacleTracker">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">obstacle_detection.</span></span><span class="sig-name descname"><span class="pre">ObstacleTracker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hsv_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hsv_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">robot_size_in_pixels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#obstacle_detection.ObstacleTracker" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Obstacle tracker class</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="obstacle_detection.ObstacleTracker.convert_center_to_pixels">
+<span class="sig-name descname"><span class="pre">convert_center_to_pixels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shortest_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#obstacle_detection.ObstacleTracker.convert_center_to_pixels" title="Permalink to this definition"></a></dt>
+<dd><p>Convert every middle point of the path from indexes to pixels</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> (<em>ndarray</em>) – Input image</p></li>
+<li><p><strong>shortest_path</strong> (<em>list</em>) – Shortest path indexes</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Shortest path pixels</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="obstacle_detection.ObstacleTracker.does_image_contain_obstacles">
+<span class="sig-name descname"><span class="pre">does_image_contain_obstacles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#obstacle_detection.ObstacleTracker.does_image_contain_obstacles" title="Permalink to this definition"></a></dt>
+<dd><p>Check if image contain obstacles, by obstacle we describe every pixel 
+with a specific color, in this case is RED</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>image</strong> (<em>ndarray</em>) – Input image</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if image contains obstacle otherwise False</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="obstacle_detection.ObstacleTracker.draw_map">
+<span class="sig-name descname"><span class="pre">draw_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obstacles_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shortest_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">goal_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imshow</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#obstacle_detection.ObstacleTracker.draw_map" title="Permalink to this definition"></a></dt>
+<dd><p>Draw the map with obstacles and shortest path</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> (<em>ndarray</em>) – Input image</p></li>
+<li><p><strong>obstacles_map</strong> (<em>list</em>) – Obstacles map</p></li>
+<li><p><strong>shortest_path</strong> (<em>list</em><em>, </em><em>optional</em>) – Shortest path, defaults to None</p></li>
+<li><p><strong>start_index</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Start index, defaults to None</p></li>
+<li><p><strong>goal_index</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Goal index, defaults to None</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="obstacle_detection.ObstacleTracker.generate_map">
+<span class="sig-name descname"><span class="pre">generate_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cur_pos_center</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">goal_pos_center</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#obstacle_detection.ObstacleTracker.generate_map" title="Permalink to this definition"></a></dt>
+<dd><p>Getting the current and target position pixels, generate a map of obstacles
+and return the map and the corresponding indexes of the current and target points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> (<em>ndarray</em>) – Input image</p></li>
+<li><p><strong>cur_pos_center</strong> (<em>tuple</em>) – Current position center pixels</p></li>
+<li><p><strong>goal_pos_center</strong> (<em>tuple</em>) – Target position center pixels</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return obstacles_map</dt>
+<dd class="field-even"><p>Obstacles map</p>
+</dd>
+<dt class="field-odd">Rtype obstacles_map</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+<dt class="field-even">Return cur_pos_center_indexes</dt>
+<dd class="field-even"><p>Current position center indexes</p>
+</dd>
+<dt class="field-odd">Rtype cur_pos_center_indexes</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Return goal_pos_center_indexes</dt>
+<dd class="field-even"><p>Target position center indexes</p>
+</dd>
+<dt class="field-odd">Rtype goal_pos_center_indexes</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="controller.html" class="btn btn-neutral float-left" title="controller module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="path_planning.html" class="btn btn-neutral float-right" title="path_planning module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Emmanouil Markodimitrakis, Emmanouil Koutoulakis.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
