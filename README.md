@@ -47,6 +47,8 @@ Furthermore, **intrinsic parameters** allows a mapping between camera coordinate
 ## 2. Receive image
 The next step is to receive image frames by subscribing to the ROS topic "/camera/image_raw" and convert it to NumPy array. Then we need to crop the image according to our needs, by specifying the window that we need to work on. Afterwards, we undistort the received image using the camera matrix and the distortion coefficients received on the previous step.
 
+<p align="center"><img src="images/undistorted_frame.png"></p>
+
 ## 3. Detect Markers
 Using the OpenCV library, we can detect two Aruco markers that are placed on the top of the robot, one marker for the current and one for the target position. We only have to call the function `cv2.detectMarkers` from which we receive the corners of each marker and we can move on to the pose estimation.
 
@@ -123,7 +125,7 @@ Then we iterate for every box of the image and convert the box to HSV. Next, we 
 
 The output of this step is a one directional array with length equals to the number of the boxes, which contains zero's (when there is no obstacle) and one's (where there is an obstacle).
 
-<p align="center"><img src=images/obstacles.png></p>
+<p align="center"><img src=images/final_map.png></p>
 
 ## 2. Find the shortest path using A-star Algorithm
 Using the obstacles map array of the previous step, we implement the [Path planning module](https://github.com/manoskout/visual_servoing/blob/master/scripts/path_planning.py) to receive the shortest path the robot should move to go into the target faster. 
