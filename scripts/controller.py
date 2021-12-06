@@ -138,7 +138,6 @@ class Controller:
 
             # Fix the final angle
             while (abs(self.beta) > 0.09) and (len(self.target_position_path)==0) and (not rospy.is_shutdown()):
-                k_beta = 0.950
                 
                 if (self.curr_homogeneous_matrix is None) or (self.target_homogeneous_matrix is None):
                     continue
@@ -160,7 +159,6 @@ class Controller:
 
                 v = 0
                 w = k_beta * self.beta
-
                 self.send_velocity_to_robot(v,w)
 
             if (self.rho < 0.08):# and (abs(self.beta) < 0.07):

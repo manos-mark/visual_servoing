@@ -19,8 +19,8 @@ CALIBRATION_FILE_PATH = rospy.get_param('calibration_file')
 HEIGHT, WIDTH, CAMERA_MATRIX, DISTORTION_COEF = get_calibration_data(CALIBRATION_FILE_PATH)
 
 # Aruco Marker ID's
-CURRENT_ID = 1
-TARGET_ID = 0
+CURRENT_ID = 0
+TARGET_ID = 1
 
 # Robot specification
 ROBOT_SIZE_IN_PIXELS = 50
@@ -125,6 +125,10 @@ def preprocess_image(data):
 	except:
 		current_frame = np.frombuffer(data.data, dtype=np.uint8).reshape(data.shape[0], data.shape[1], -1)
 
+	temp_frame = current_frame.copy()
+	# temp_frame = cv2.resize(temp_frame, (960, 540))
+	cv2.imshow('Original frame', temp_frame)
+ 
 	h,  w = current_frame.shape[:2]
 	newcameramtx, roi = cv2.getOptimalNewCameraMatrix(CAMERA_MATRIX, DISTORTION_COEF, (WIDTH,HEIGHT), 1, (WIDTH,HEIGHT))
 	
@@ -133,7 +137,7 @@ def preprocess_image(data):
 	
 	# crop the image
 	x, y, w, h = roi
-	undistort_frame = dst[y:y+h, x:x+w]
+	undistort_frame = dst[y:y+h, x:x+w] 
 
 	return undistort_frame
 
@@ -302,14 +306,14 @@ if __name__ == '__main__':
 	target_position = dict(corners=None, center=None, rvec=None, tvec=None)
 
 	# Receive image from camera
-	# receive_image()
+	receive_image()
 
 	# Debugging without camera
-	data = cv2.imread('/home/manos/Desktop/obstacles.png')
-	while not rospy.is_shutdown():
-		on_image_received(data)
-		#-- press q to quit
-		if cv2.waitKey(1) & 0xFF == ord('q'):
-			break
+	# data = cv2.imread('/home/manos/Desktop/obstacles.png')
+	# while not rospy.is_shutdown():
+	# 	on_image_received(data)
+	# 	#-- press q to quit
+	# 	if cv2.waitKey(1) & 0xFF == ord('q'):
+	# 		break
 
 	
