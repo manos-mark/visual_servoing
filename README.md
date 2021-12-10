@@ -24,6 +24,8 @@ For the project, the mobile robot used is a Turtlebot3 Burger. The Turtlebot3 is
 Camera calibration is an integral part of this project. For this phase, the project uses the [camera_calibration](http://wiki.ros.org/camera_calibration) package which allow easy calibration of monocular cameras using a checkerboard calibration target. The packages use OpenCV library which contains the camera calibration method.  
 <p align="center"><img src="images/checkerboard.png"></p>
 
+`rosrun camera_calibration cameracalibrator.py --size 8x6 --square 0.08 image:=/camera/image_raw camera:=/camera`
+
 #### **Intrinsic calibration**  
 As we aforementioned, it uses the [camera_calibration](http://wiki.ros.org/camera_calibration) package. This package allow easy calibration of monocular or stereo cameras. The checkerboard was the tool in order to fix the *Radial Distortion* of the acquired image. *Radial or Barrel Distortion* can be presented as:
 
