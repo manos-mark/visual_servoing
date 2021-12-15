@@ -10,6 +10,9 @@ https://user-images.githubusercontent.com/17071575/145135317-38aa9ec2-632f-4824-
 
 Following on this report, we will analyze the mathematical theoretical background and the code implementation we implemented.
 
+## Workflow
+<p align="center"><img src="images/visual_servoing_graph.png"></p>
+
 ## What is ROS?
 The Robot Operating System (ROS) is an open source middleware which contains a set of libraries, software and tools that are used to facilitate the development of robotic applications. There is a plethora of features, from sensor drivers to state-of-the-art algorithms. As middleware, it contains characteristics of both software and hardware, hence, it is able to perform various actions like hardware abstraction and low level control.
 Until now, a different version of ROS exists with some crucial differences, so for compatibility reasons we are using the Melodic release.
